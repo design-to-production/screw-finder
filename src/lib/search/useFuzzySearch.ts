@@ -109,6 +109,8 @@ export function useFuzzySearch<T>({
         term: q,
         properties: ["text"],
         tolerance,
+        // Orama defaults to limit: 10; we need every matching row for this UI.
+        limit: items.length,
       });
       const rows = (result.hits ?? [])
         .map(h => itemsByIdRef.current.get(String(h.document.id)))
@@ -133,6 +135,7 @@ export function useFuzzySearch<T>({
         term: query.trim(),
         properties: ["text"],
         tolerance,
+        limit: items.length,
       });
       const rows = (result.hits ?? [])
         .map(h => itemsByIdRef.current.get(String(h.document.id)))
@@ -142,7 +145,7 @@ export function useFuzzySearch<T>({
     return () => {
       cancelled = true;
     };
-  }, [isIndexing, query, tolerance]);
+  }, [isIndexing, query, tolerance, items.length]);
 
   return {
     query,
