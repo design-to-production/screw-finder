@@ -2,6 +2,7 @@ import type { CwScrewItem, CwScrewsDocument } from "./model";
 
 export interface CwScrewEntry {
   // identity
+  id: string;
   itemId: string;
   elementType: number;
 
@@ -28,8 +29,16 @@ export interface CwScrewEntry {
   isReadonly?: boolean;
 }
 
-function toEntry(item: CwScrewItem, len: CwScrewItem["lengths"][number]): CwScrewEntry {
+function toEntry(
+  item: CwScrewItem,
+  len: CwScrewItem["lengths"][number],
+  withinItemIndex: number,
+): CwScrewEntry {
+  // Must be unique across the whole dataset (used as the search-index primary key).
+  // Some source rows can share the same length + empty orderNumber, so include index.
+  const id = `${item.id}:${withinItemIndex}`;
   return {
+    id,
     itemId: item.id,
     elementType: item.elementType,
 
@@ -54,6 +63,23 @@ function toEntry(item: CwScrewItem, len: CwScrewItem["lengths"][number]): CwScre
   };
 }
 
+/** Text blob indexed for fuzzy search (generic hook consumes this). */
+export function getCwScrewEntrySearchText(r: CwScrewEntry): string {
+  const parts = [
+    r.name,
+    r.shortName,
+    r.material,
+    r.norm,
+    r.manufacturer,
+    r.drive,
+    r.lengthOrderNumber,
+    r.lengthMm != null ? `length ${r.lengthMm}` : undefined,
+    r.outerDiameterMm != null ? `outer ${r.outerDiameterMm}` : undefined,
+    r.innerDiameterMm != null ? `inner ${r.innerDiameterMm}` : undefined,
+  ];
+  return parts.filter(Boolean).join(" ");
+}
+
 export function buildScrewEntries(doc: CwScrewsDocument): CwScrewEntry[] {
   const rows: CwScrewEntry[] = [];
   for (const item of doc.items) {
@@ -66,12 +92,13 @@ export function buildScrewEntries(doc: CwScrewsDocument): CwScrewEntry[] {
           threadLength2Mm: undefined,
           weightKg: undefined,
           orderNumber: undefined,
-        }),
+        }, 0),
       );
       continue;
     }
-    for (const len of item.lengths) {
-      rows.push(toEntry(item, len));
+    for (let i = 0; i < item.lengths.length; i++) {
+      const len = item.lengths[i]!;
+      rows.push(toEntry(item, len, i));
     }
   }
   return rows;

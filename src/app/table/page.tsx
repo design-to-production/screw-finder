@@ -6,8 +6,9 @@ import type { ColDef } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
 
-import { parseCwScrewsVbax } from '@/lib/cw-screws/parse';
-import { buildScrewEntries, type CwScrewEntry } from '@/lib/cw-screws/entries';
+import { FuzzySearchBar } from '@/components/FuzzySearchBar';
+import { useFuzzySearch } from '@/lib/search';
+import { buildScrewEntries, getCwScrewEntrySearchText, type CwScrewEntry } from '@/lib/cw-screws/entries';
 import { useMemo, useState } from 'react';
 import screwBase from '@/data/screw_base.json';
 import type { CwScrewsDocument } from '@/lib/cw-screws/model';
@@ -30,33 +31,39 @@ const colDefs: ColDef<CwScrewEntry>[] = [
   { field: 'lengthWeightKg', headerName: 'Weight (kg)', width: 140, filter: 'agNumberColumnFilter' },
   { field: 'lengthOrderNumber', headerName: 'Order #', width: 160, filter: true },
 
+  { field: 'id', headerName: 'Entry ID', width: 260, filter: true },
   { field: 'itemId', headerName: 'Item ID', width: 260, filter: true }
 ];
 
 export default function TablePage() {
-  const [fileName, setFileName] = useState<string>('');
-  const [rawText, setRawText] = useState<string>('');
   const [error, setError] = useState<string>('');
 
-  const rows = useMemo(() => {
-    if (!rawText) {
-      return buildScrewEntries(screwBase as unknown as CwScrewsDocument);
-    }
-    try {
-      setError('');
-      const doc = parseCwScrewsVbax(rawText);
-      return buildScrewEntries(doc);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-      return [] as CwScrewEntry[];
-    }
-  }, [rawText]);
+  const baseRows = useMemo(() => {
+    return buildScrewEntries(screwBase as unknown as CwScrewsDocument);
+  }, []);
+
+  const fuzzy = useFuzzySearch<CwScrewEntry>({
+    items: baseRows,
+    getId: (r) => r.id,
+    getSearchText: getCwScrewEntrySearchText,
+    onIndexError: (err) => setError(err.message)
+  });
 
   return (
     <div className="max-w-7xl mx-auto p-8 w-full">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Table</h1>
       </div>
+
+      <FuzzySearchBar<CwScrewEntry>
+        query={fuzzy.query}
+        setQuery={fuzzy.setQuery}
+        clearQuery={fuzzy.clearQuery}
+        isIndexing={fuzzy.isIndexing}
+        filteredCount={fuzzy.filteredCount}
+        totalCount={fuzzy.totalCount}
+        placeholder="Fuzzy search (e.g. 'wurt sk 6 120', 'stahl verzinkt', 'aw40')"
+      />
 
       {error ? (
         <div className="bg-[#1a1a1a] border-2 border-red-400 rounded-xl p-4 text-red-200 font-mono text-sm whitespace-pre-wrap mb-4">
@@ -66,8 +73,9 @@ export default function TablePage() {
 
       <div className="ag-theme-quartz-dark" style={{ height: '70vh', width: '100%' }}>
         <AgGridReact<CwScrewEntry>
-          rowData={rows}
+          rowData={fuzzy.filteredItems}
           columnDefs={colDefs}
+          theme="legacy"
           defaultColDef={{
             sortable: true,
             resizable: true,
@@ -75,7 +83,6 @@ export default function TablePage() {
             floatingFilter: true
           }}
           animateRows
-          // AG Grid virtualizes rows by default; keep pagination off for virtual scroll.
           pagination={false}
           rowBuffer={40}
         />
