@@ -1,12 +1,25 @@
 @import "tailwindcss";
 
+/* Design-to-Production inspired palette — primary brand red from designtoproduction.com */
+@theme {
+  --color-d2p-red: #dc4b3a;
+  --color-d2p-red-dark: #b8392b;
+  --color-d2p-ink: #1a1716;
+  --color-d2p-muted: #5c5654;
+  --color-d2p-bg: #faf9f7;
+  --color-d2p-cream: #f5f2ed;
+  --color-d2p-border: #e8e4df;
+  --color-d2p-surface: #ffffff;
+}
+
 @layer base {
   :root {
-    @apply text-[rgba(255,255,255,0.87)] bg-[#242424] font-sans;
+    @apply text-d2p-ink bg-d2p-bg;
   }
 
   body {
-    @apply min-w-[320px] min-h-[100dvh] m-0 relative;
+    @apply min-w-[320px] min-h-[100svh] m-0 relative;
+    font-family: var(--font-d2p), ui-sans-serif, system-ui, sans-serif;
   }
 }
 
@@ -15,13 +28,10 @@ body::before {
   position: fixed;
   inset: 0;
   z-index: -1;
-  opacity: 0.05;
+  opacity: 1;
   background:
-    radial-gradient(circle at 20% 20%, rgba(251, 240, 223, 0.06) 0%, transparent 45%),
-    radial-gradient(circle at 80% 30%, rgba(97, 218, 251, 0.05) 0%, transparent 40%),
-    radial-gradient(circle at 30% 80%, rgba(251, 240, 223, 0.04) 0%, transparent 45%),
-    radial-gradient(circle at 75% 75%, rgba(97, 218, 251, 0.03) 0%, transparent 50%);
-  filter: blur(0px);
+    radial-gradient(ellipse 120% 80% at 100% -20%, rgba(220, 75, 58, 0.07) 0%, transparent 55%),
+    radial-gradient(ellipse 90% 60% at 0% 100%, rgba(245, 242, 237, 0.9) 0%, transparent 50%);
   pointer-events: none;
 }
 
@@ -41,4 +51,3 @@ body::before {
     animation: none !important;
   }
 }
-

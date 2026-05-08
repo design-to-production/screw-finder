@@ -16,7 +16,7 @@ export function generateStaticParams() {
 }
 
 function fmt(v: unknown): ReactNode {
-  if (v === undefined || v === null || v === "") return <span className="text-[#fbf0df]/35">—</span>;
+  if (v === undefined || v === null || v === "") return <span className="text-d2p-muted/50">—</span>;
   if (typeof v === "boolean") return v ? "Yes" : "No";
   if (typeof v === "number") return Number.isFinite(v) ? String(v) : "—";
   if (typeof v === "object") return <pre className="whitespace-pre-wrap font-mono text-xs">{JSON.stringify(v, null, 2)}</pre>;
@@ -28,8 +28,8 @@ function FieldGrid({ rows }: { rows: { label: string; value: ReactNode }[] }) {
     <dl className="grid grid-cols-[minmax(9rem,auto)_1fr] gap-x-4 gap-y-2 text-sm">
       {rows.map(({ label, value }) => (
         <div key={label} className="contents">
-          <dt className="text-[#fbf0df]/45">{label}</dt>
-          <dd className="min-w-0 text-[#fbf0df]/90">{value}</dd>
+          <dt className="text-d2p-muted">{label}</dt>
+          <dd className="min-w-0 text-d2p-ink">{value}</dd>
         </div>
       ))}
     </dl>
@@ -118,7 +118,7 @@ export default async function FullCardPage({ params }: PageProps) {
 
   return (
     <AppShell
-      title={<span className="text-lg font-semibold tracking-tight">Full card</span>}
+      title={<span className="text-lg font-semibold tracking-tight text-d2p-ink">Full card</span>}
       navRight={<NavLinks />}
     >
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -126,20 +126,20 @@ export default async function FullCardPage({ params }: PageProps) {
           <div className="flex flex-wrap items-center gap-3 text-sm">
             <Link
               href="/cards/"
-              className="rounded border border-[#fbf0df]/25 px-2 py-1 text-[#fbf0df]/85 transition-colors hover:bg-[#fbf0df]/10"
+              className="rounded border border-d2p-border px-2 py-1 text-d2p-ink transition-colors hover:bg-d2p-cream"
             >
               ← Cards
             </Link>
             <Link
               href="/table/"
-              className="rounded border border-[#fbf0df]/25 px-2 py-1 text-[#fbf0df]/85 transition-colors hover:bg-[#fbf0df]/10"
+              className="rounded border border-d2p-border px-2 py-1 text-d2p-ink transition-colors hover:bg-d2p-cream"
             >
               Table
             </Link>
-            <span className="text-[#fbf0df]/45">
+            <span className="text-d2p-muted">
               List index{" "}
-              <span className="font-mono text-[#fbf0df]/80">{idx}</span>
-              <span className="mx-1 text-[#fbf0df]/35">/</span>
+              <span className="font-mono text-d2p-ink">{idx}</span>
+              <span className="mx-1 text-d2p-muted/60">/</span>
               <span className="font-mono">{cwScrewEntryList.length}</span>
               <span className="ml-1">entries</span>
             </span>
@@ -155,8 +155,8 @@ export default async function FullCardPage({ params }: PageProps) {
             />
           </div>
 
-          <section className="overflow-hidden rounded-xl border border-[#fbf0df]/20 bg-[#1a1a1a]/90">
-            <div className="grid gap-4 border-b border-[#fbf0df]/10 p-4 md:grid-cols-[minmax(0,280px)_1fr] md:items-start">
+          <section className="overflow-hidden rounded-xl border border-d2p-border bg-d2p-surface shadow-sm">
+            <div className="grid gap-4 border-b border-d2p-border p-4 md:grid-cols-[minmax(0,280px)_1fr] md:items-start">
               <ScrewCardPreview
                 className="aspect-[4/3] w-full max-w-sm shrink-0 rounded-lg min-h-[200px]"
                 lengthMm={row.lengthMm}
@@ -165,11 +165,11 @@ export default async function FullCardPage({ params }: PageProps) {
                 threadLengthMm={row.threadLengthMm}
               />
               <div className="min-w-0">
-                <h1 className="text-xl font-semibold leading-snug text-[#fbf0df]">{title}</h1>
-                <p className="mt-1 font-mono text-xs text-[#fbf0df]/50">
+                <h1 className="text-xl font-semibold leading-snug text-d2p-ink">{title}</h1>
+                <p className="mt-1 font-mono text-xs text-d2p-muted">
                   Item #{row.itemId}
                   {row.folderPath ? (
-                    <span className="block text-[#fbf0df]/40">{row.folderPath}</span>
+                    <span className="block text-d2p-muted/90">{row.folderPath}</span>
                   ) : null}
                 </p>
               </div>
@@ -177,7 +177,7 @@ export default async function FullCardPage({ params }: PageProps) {
 
             <div className="space-y-6 p-4">
               <section>
-                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-[#f3d5a3]/90">
+                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-d2p-red">
                   Flattened row (search index)
                 </h2>
                 <FieldGrid rows={entryRows(row)} />
@@ -186,14 +186,14 @@ export default async function FullCardPage({ params }: PageProps) {
               {item ? (
                 <>
                   <section>
-                    <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-[#f3d5a3]/90">
+                    <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-d2p-red">
                       Source catalog item
                     </h2>
                     <FieldGrid rows={itemRows(item)} />
                   </section>
 
                   <section>
-                    <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-[#f3d5a3]/90">
+                    <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-d2p-red">
                       Length variants on item ({item.lengths.length})
                     </h2>
                     <div className="grid w-full gap-5 [grid-template-columns:repeat(auto-fit,minmax(min(100%,24rem),1fr))]">
@@ -212,7 +212,7 @@ export default async function FullCardPage({ params }: PageProps) {
                   </section>
                 </>
               ) : (
-                <p className="text-sm text-amber-200/90">Catalog item not found for this row.</p>
+                <p className="text-sm text-amber-800">Catalog item not found for this row.</p>
               )}
             </div>
           </section>

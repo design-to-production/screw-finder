@@ -47,7 +47,7 @@ export function FullCardPdfDownload({ model, filename, preview }: Props) {
       type="button"
       onClick={() => void download()}
       disabled={busy}
-      className="rounded border border-[#fbf0df]/35 bg-[#fbf0df]/10 px-3 py-1.5 text-sm font-medium text-[#fbf0df] transition-colors hover:bg-[#fbf0df]/18 disabled:opacity-50"
+      className="rounded-lg border border-d2p-red bg-d2p-red/10 px-3 py-1.5 text-sm font-semibold text-d2p-red transition-colors hover:bg-d2p-red/15 disabled:opacity-50"
     >
       {busy ? "Preparing PDF…" : "Download PDF"}
     </button>

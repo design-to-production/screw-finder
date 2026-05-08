@@ -10,27 +10,36 @@ export type ScrewPreviewParams = {
 const PREVIEW_W = 640;
 const PREVIEW_H = 480;
 
+/** White scene backdrop for PNG previews and landing R3F canvas. */
+export const D2P_PREVIEW_BACKGROUND_HEX = 0xffffff;
+
+/** Bump when preview look (colors / bg) changes — invalidates in-memory PNG cache. */
+const PREVIEW_CACHE_VERSION = "d2pred-lg-v5";
+
+/** D2P brand reds for preview screws (slight variation per part). */
+const PREVIEW_SCREW_HEAD = 0xdc4b3a;
+const PREVIEW_SCREW_THREAD = 0xc94136;
+const PREVIEW_SCREW_SMOOTH = 0xd2483d;
+const PREVIEW_SCREW_TIP = 0xb8392b;
+
 /** Stable key so visually identical screws share one bitmap. */
 export function screwPreviewCacheKey(p: ScrewPreviewParams): string {
   const q = (n: number | undefined, d: number) =>
     n === undefined || Number.isNaN(n) ? "_" : String(Math.round(n * 10 ** d) / 10 ** d);
-  return [q(p.lengthMm, 2), q(p.outerDiameterMm, 3), q(p.innerDiameterMm, 3), q(p.threadLengthMm, 2)].join(":");
+  return [PREVIEW_CACHE_VERSION, q(p.lengthMm, 2), q(p.outerDiameterMm, 3), q(p.innerDiameterMm, 3), q(p.threadLengthMm, 2)].join(
+    ":",
+  );
 }
 
 const dataUrlCache = new Map<string, string>();
 
-function disposeObject3D(root: THREE.Object3D) {
-  root.traverse(obj => {
-    if (obj instanceof THREE.Mesh) {
-      obj.geometry?.dispose();
-      const mat = obj.material;
-      if (Array.isArray(mat)) mat.forEach(m => m.dispose());
-      else (mat as THREE.Material | undefined)?.dispose();
-    }
-  });
-}
+export type ScrewPreviewMaterialVariant = "catalogDark" | "landingLight";
 
-function buildScrewGroup(props: ScrewPreviewParams): THREE.Group {
+/** Shared screw mesh tree for PNG previews and WebGL (e.g. R3F landing hero). */
+export function buildScrewGroup(
+  props: ScrewPreviewParams,
+  variant: ScrewPreviewMaterialVariant = "catalogDark",
+): THREE.Group {
   const L = Math.max(props.lengthMm, 1);
   const od = Math.max(props.outerDiameterMm ?? 6, 0.1);
   const id = Math.max(props.innerDiameterMm ?? od * 0.55, 0.05);
@@ -63,42 +72,77 @@ function buildScrewGroup(props: ScrewPreviewParams): THREE.Group {
   group.rotation.y = 0.85;
 
   const steel = 0xb8a894;
+  const threadC = 0xa89882;
+  const tipC = 0x9d8f7c;
+
+  const headMat =
+    variant === "landingLight"
+      ? new THREE.MeshStandardMaterial({
+          color: PREVIEW_SCREW_HEAD,
+          metalness: 0.22,
+          roughness: 0.48,
+        })
+      : new THREE.MeshStandardMaterial({ color: steel, metalness: 0.4, roughness: 0.42 });
+  const threadMat =
+    variant === "landingLight"
+      ? new THREE.MeshStandardMaterial({
+          color: PREVIEW_SCREW_THREAD,
+          metalness: 0.2,
+          roughness: 0.52,
+        })
+      : new THREE.MeshStandardMaterial({ color: threadC, metalness: 0.35, roughness: 0.5 });
+  const smoothMat =
+    variant === "landingLight"
+      ? new THREE.MeshStandardMaterial({
+          color: PREVIEW_SCREW_SMOOTH,
+          metalness: 0.21,
+          roughness: 0.49,
+        })
+      : new THREE.MeshStandardMaterial({ color: steel, metalness: 0.38, roughness: 0.44 });
+  const tipMat =
+    variant === "landingLight"
+      ? new THREE.MeshStandardMaterial({
+          color: PREVIEW_SCREW_TIP,
+          metalness: 0.18,
+          roughness: 0.54,
+        })
+      : new THREE.MeshStandardMaterial({ color: tipC, metalness: 0.32, roughness: 0.48 });
 
   const headGeom = new THREE.CylinderGeometry(headR, headR * 0.92, headH, 28);
-  const headMesh = new THREE.Mesh(
-    headGeom,
-    new THREE.MeshStandardMaterial({ color: steel, metalness: 0.4, roughness: 0.42 }),
-  );
+  const headMesh = new THREE.Mesh(headGeom, headMat);
   headMesh.position.y = headY;
   group.add(headMesh);
 
   const threadGeom = new THREE.CylinderGeometry(shaftR * 1.06, shaftR, threadH, 22);
-  const threadMesh = new THREE.Mesh(
-    threadGeom,
-    new THREE.MeshStandardMaterial({ color: 0xa89882, metalness: 0.35, roughness: 0.5 }),
-  );
+  const threadMesh = new THREE.Mesh(threadGeom, threadMat);
   threadMesh.position.y = threadY;
   group.add(threadMesh);
 
   if (smoothH > 0.001) {
     const smoothGeom = new THREE.CylinderGeometry(shaftR, shaftR, smoothH, 20);
-    const smoothMesh = new THREE.Mesh(
-      smoothGeom,
-      new THREE.MeshStandardMaterial({ color: steel, metalness: 0.38, roughness: 0.44 }),
-    );
+    const smoothMesh = new THREE.Mesh(smoothGeom, smoothMat);
     smoothMesh.position.y = smoothY;
     group.add(smoothMesh);
   }
 
   const tipGeom = new THREE.CylinderGeometry(0, shaftR * 0.85, tipH, 16);
-  const tipMesh = new THREE.Mesh(
-    tipGeom,
-    new THREE.MeshStandardMaterial({ color: 0x9d8f7c, metalness: 0.32, roughness: 0.48 }),
-  );
+  const tipMesh = new THREE.Mesh(tipGeom, tipMat);
   tipMesh.position.y = tipY;
   group.add(tipMesh);
 
   return group;
+}
+
+/** Dispose geometries/materials under a preview group built by {@link buildScrewGroup}. */
+export function disposeScrewGroup(root: THREE.Object3D): void {
+  root.traverse(obj => {
+    if (obj instanceof THREE.Mesh) {
+      obj.geometry?.dispose();
+      const mat = obj.material;
+      if (Array.isArray(mat)) mat.forEach(m => m.dispose());
+      else (mat as THREE.Material | undefined)?.dispose();
+    }
+  });
 }
 
 let renderer: THREE.WebGLRenderer | null = null;
@@ -126,27 +170,28 @@ function getOffscreenRenderer(): THREE.WebGLRenderer {
 function renderScrewPreviewDataUrlSync(params: ScrewPreviewParams): string {
   const renderer = getOffscreenRenderer();
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x1e1e1e);
+  scene.background = new THREE.Color(D2P_PREVIEW_BACKGROUND_HEX);
 
   const camera = new THREE.PerspectiveCamera(42, PREVIEW_W / PREVIEW_H, 0.05, 80);
   camera.position.set(2.4, 0.35, 2.4);
   camera.lookAt(0, 0, 0);
 
-  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-  const d1 = new THREE.DirectionalLight(0xffffff, 1.15);
-  d1.position.set(3.5, 6, 4);
+  /* Soft lighting so brand-red screw reads on white without clipping highlights. */
+  scene.add(new THREE.AmbientLight(0xffffff, 1.24));
+  const d1 = new THREE.DirectionalLight(0xffffff, 2.1);
+  d1.position.set(3.8, 6.5, 4.2);
   scene.add(d1);
-  const d2 = new THREE.DirectionalLight(0xffffff, 0.25);
-  d2.position.set(-2, -1, -3);
+  const d2 = new THREE.DirectionalLight(0xfff0ee, 0.76);
+  d2.position.set(-3.2, -1.2, -3.8);
   scene.add(d2);
 
-  const screw = buildScrewGroup(params);
+  const screw = buildScrewGroup(params, "landingLight");
   scene.add(screw);
 
   renderer.render(scene, camera);
   const dataUrl = renderer.domElement.toDataURL("image/png");
 
-  disposeObject3D(screw);
+  disposeScrewGroup(screw);
   scene.remove(screw);
 
   return dataUrl;

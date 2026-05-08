@@ -18,10 +18,8 @@ export function ScrewCatalogCard({ entry, current = false }: ScrewCatalogCardPro
   return (
     <Link
       href={`/fullcard/${entry.listIndex}/`}
-      className={`flex flex-col overflow-hidden rounded-xl border bg-[#1a1a1a]/90 shadow-sm outline-none transition-colors hover:border-[#f3d5a3]/35 hover:bg-[#1f1f1f]/90 focus-visible:ring-2 focus-visible:ring-[#f3d5a3]/50 ${
-        current
-          ? "border-[#f3d5a3]/50 ring-2 ring-[#f3d5a3]/40"
-          : "border-[#fbf0df]/20"
+      className={`flex flex-col overflow-hidden rounded-xl border bg-d2p-surface shadow-sm outline-none transition-all hover:border-d2p-red/35 hover:shadow-md focus-visible:ring-2 focus-visible:ring-d2p-red/35 ${
+        current ? "border-d2p-red ring-2 ring-d2p-red/30" : "border-d2p-border"
       }`}
     >
       <article className="flex min-h-0 flex-1 flex-col">
@@ -32,33 +30,33 @@ export function ScrewCatalogCard({ entry, current = false }: ScrewCatalogCardPro
           innerDiameterMm={entry.innerDiameterMm}
           threadLengthMm={entry.threadLengthMm}
         />
-        <div className="flex min-h-0 flex-1 flex-col gap-1.5 border-t border-[#fbf0df]/10 p-4">
-          <h2 className="line-clamp-2 text-base font-semibold leading-snug text-[#fbf0df]">{title}</h2>
-          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm text-[#fbf0df]/75">
+        <div className="flex min-h-0 flex-1 flex-col gap-1.5 border-t border-d2p-border p-4">
+          <h2 className="line-clamp-2 text-base font-semibold leading-snug text-d2p-ink">{title}</h2>
+          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm text-d2p-muted">
             {entry.shortName ? (
               <>
-                <dt className="text-[#fbf0df]/45">Short</dt>
-                <dd className="truncate">{entry.shortName}</dd>
+                <dt className="text-d2p-muted/80">Short</dt>
+                <dd className="truncate text-d2p-ink">{entry.shortName}</dd>
               </>
             ) : null}
-            <dt className="text-[#fbf0df]/45">Length</dt>
-            <dd>{entry.lengthMm} mm</dd>
+            <dt className="text-d2p-muted/80">Length</dt>
+            <dd className="text-d2p-ink">{entry.lengthMm} mm</dd>
             {entry.threadLengthMm != null ? (
               <>
-                <dt className="text-[#fbf0df]/45">Thread</dt>
-                <dd>{entry.threadLengthMm} mm</dd>
+                <dt className="text-d2p-muted/80">Thread</dt>
+                <dd className="text-d2p-ink">{entry.threadLengthMm} mm</dd>
               </>
             ) : null}
             {entry.outerDiameterMm != null ? (
               <>
-                <dt className="text-[#fbf0df]/45">Ø outer</dt>
-                <dd>{entry.outerDiameterMm} mm</dd>
+                <dt className="text-d2p-muted/80">Ø outer</dt>
+                <dd className="text-d2p-ink">{entry.outerDiameterMm} mm</dd>
               </>
             ) : null}
             {entry.material ? (
               <>
-                <dt className="text-[#fbf0df]/45">Material</dt>
-                <dd className="line-clamp-1">{entry.material}</dd>
+                <dt className="text-d2p-muted/80">Material</dt>
+                <dd className="line-clamp-1 text-d2p-ink">{entry.material}</dd>
               </>
             ) : null}
           </dl>

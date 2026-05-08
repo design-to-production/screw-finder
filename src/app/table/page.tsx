@@ -39,7 +39,7 @@ function FullCardGlyph({ className }: { className?: string }) {
 function FullCardHeader(_props: IHeaderParams) {
   return (
     <div
-      className="flex h-full w-full items-center justify-center text-[#fbf0df]/70"
+      className="flex h-full w-full items-center justify-center text-d2p-muted"
       title="Full card detail"
     >
       <FullCardGlyph className="h-[17px] w-[17px]" />
@@ -53,7 +53,7 @@ function FullCardLinkCell(props: ICellRendererParams<CwScrewEntry>) {
   return (
     <Link
       href={`/fullcard/${idx}/`}
-      className="inline-flex items-center justify-center rounded-md border border-[#fbf0df]/28 p-1.5 text-[#fbf0df]/90 transition-colors hover:border-[#f3d5a3]/45 hover:bg-[#fbf0df]/10"
+      className="inline-flex items-center justify-center rounded-md border border-d2p-border p-1.5 text-d2p-red transition-colors hover:border-d2p-red hover:bg-d2p-red/10"
       aria-label="Open full card"
       title="Full card"
     >
@@ -113,7 +113,7 @@ export default function TablePage() {
 
   return (
     <AppShell
-      title={<span className="text-lg font-semibold tracking-tight">Table</span>}
+      title={<span className="text-lg font-semibold tracking-tight text-d2p-ink">Table</span>}
       center={
         <FuzzySearchBar
           variant="navbar"
@@ -130,14 +130,14 @@ export default function TablePage() {
       navRight={<NavLinks />}
     >
       {searchError ? (
-        <div className="shrink-0 border-b border-red-400/80 bg-[#1a1a1a] px-2 py-2 font-mono text-sm text-red-200">
+        <div className="shrink-0 border-b border-red-200 bg-red-50 px-3 py-2 font-mono text-sm text-red-800">
           {searchError}
         </div>
       ) : null}
 
       <div className="flex min-h-0 flex-1 flex-col">
         <div
-          className="ag-grid-flat ag-theme-quartz-dark min-h-0 w-full flex-1"
+          className="ag-grid-flat ag-theme-quartz min-h-0 w-full flex-1"
           style={{ minHeight: 240, height: "100%" }}
         >
           <AgGridReact<CwScrewEntry>

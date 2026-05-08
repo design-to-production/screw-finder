@@ -63,7 +63,7 @@ export function ScrewCardPreview({ className = "", ...params }: ScrewCardPreview
   return (
     <div
       ref={rootRef}
-      className={`relative overflow-hidden rounded-lg border border-[#fbf0df]/15 bg-[#1e1e1e] ${className}`}
+      className={`relative overflow-hidden rounded-lg border border-d2p-border bg-white ${className}`}
     >
       {dataUrl ? (
         <img src={dataUrl} alt="" className="h-full w-full object-cover" />
@@ -72,11 +72,11 @@ export function ScrewCardPreview({ className = "", ...params }: ScrewCardPreview
           Preview failed
         </div>
       ) : inView ? (
-        <div className="flex h-full min-h-[200px] w-full items-center justify-center bg-[#1e1e1e] text-xs text-[#fbf0df]/35">
+        <div className="flex h-full min-h-[200px] w-full items-center justify-center bg-d2p-bg text-xs text-d2p-muted">
           Rendering…
         </div>
       ) : (
-        <div className="flex h-full min-h-[200px] w-full items-center justify-center text-[11px] text-[#fbf0df]/30">
+        <div className="flex h-full min-h-[200px] w-full items-center justify-center text-[11px] text-d2p-muted/50">
           Preview off-screen
         </div>
       )}

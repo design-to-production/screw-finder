@@ -1,30 +1,33 @@
-/* Flush grid: no rounded wrapper, minimal cell/header padding (scoped) */
-.ag-grid-flat.ag-theme-quartz-dark {
+/* Flush grid: no rounded wrapper, minimal cell/header padding (scoped) — light quartz */
+.ag-grid-flat.ag-theme-quartz {
   --ag-border-radius: 0;
   --ag-wrapper-border-radius: 0;
   --ag-cell-horizontal-padding: 6px;
   --ag-widget-container-vertical-padding: 2px;
   --ag-widget-container-horizontal-padding: 4px;
+  --ag-header-background-color: #f5f2ed;
+  --ag-header-foreground-color: #1a1716;
+  --ag-odd-row-background-color: #faf9f7;
 }
 
-.ag-grid-flat.ag-theme-quartz-dark .ag-root-wrapper,
-.ag-grid-flat.ag-theme-quartz-dark .ag-root-wrapper-body {
+.ag-grid-flat.ag-theme-quartz .ag-root-wrapper,
+.ag-grid-flat.ag-theme-quartz .ag-root-wrapper-body {
   border-radius: 0 !important;
 }
 
-.ag-grid-flat.ag-theme-quartz-dark .ag-header-cell,
-.ag-grid-flat.ag-theme-quartz-dark .ag-cell {
+.ag-grid-flat.ag-theme-quartz .ag-header-cell,
+.ag-grid-flat.ag-theme-quartz .ag-cell {
   padding-left: 6px;
   padding-right: 6px;
 }
 
-.ag-grid-flat.ag-theme-quartz-dark .ag-header-cell-comp-wrapper {
+.ag-grid-flat.ag-theme-quartz .ag-header-cell-comp-wrapper {
   padding-left: 0;
   padding-right: 0;
 }
 
-.ag-grid-flat.ag-theme-quartz-dark .ag-floating-filter-body input,
-.ag-grid-flat.ag-theme-quartz-dark .ag-input-field-input,
-.ag-grid-flat.ag-theme-quartz-dark .ag-text-field-input {
+.ag-grid-flat.ag-theme-quartz .ag-floating-filter-body input,
+.ag-grid-flat.ag-theme-quartz .ag-input-field-input,
+.ag-grid-flat.ag-theme-quartz .ag-text-field-input {
   border-radius: 0 !important;
 }

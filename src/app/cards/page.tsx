@@ -23,7 +23,7 @@ export default function CardsPage() {
 
   return (
     <AppShell
-      title={<span className="text-lg font-semibold tracking-tight">Cards</span>}
+      title={<span className="text-lg font-semibold tracking-tight text-d2p-ink">Cards</span>}
       center={
         <FuzzySearchBar
           variant="navbar"
@@ -40,7 +40,7 @@ export default function CardsPage() {
       navRight={<NavLinks />}
     >
       {searchError ? (
-        <div className="shrink-0 border-b border-red-400/80 bg-[#1a1a1a] px-2 py-2 font-mono text-sm text-red-200">
+        <div className="shrink-0 border-b border-red-200 bg-red-50 px-3 py-2 font-mono text-sm text-red-800">
           {searchError}
         </div>
       ) : null}
