@@ -1,7 +1,6 @@
 import type {
   CwConnectorMeta,
   CwCondensedAttributes,
-  CwFolder,
   CwItemLength,
   CwLangCode,
   CwScrewItem,
@@ -96,17 +95,6 @@ function pickName(names: Partial<Record<CwLangCode, string>>): string | undefine
   return names.en ?? names.nl ?? names.fr ?? names.it ?? Object.values(names)[0];
 }
 
-function parseFolder(record: Element): CwFolder {
-  return {
-    id: record.getAttribute("ID") ?? "",
-    elementType: int(record.getAttribute("ELEMENT_TYPE") ?? undefined),
-    parentId: getChildText(record, "PARENT_ID"),
-    isReadonly: bool01(getChildText(record, "IS_READONLY")),
-    name: getChildText(record, "NAME"),
-    names: parseNames(record),
-  };
-}
-
 function parseItemLength(record: Element): CwItemLength {
   return {
     lengthMm: num(getChildText(record, "LENGTH")) ?? 0,
@@ -133,6 +121,35 @@ function parseCondensedAttributes(record: Element): CwCondensedAttributes | unde
   }
 
   return Object.keys(out).length ? out : undefined;
+}
+
+/** Merge VbaItemFolders records onto the parent item (no nested folder objects). */
+function parseFlattenedFolderFields(folderRecords: Element[]): Pick<
+  CwScrewItem,
+  "folderPath" | "folderNames" | "folderIsReadonly"
+> {
+  if (!folderRecords.length) return {};
+
+  const segments: string[] = [];
+  let folderIsReadonly: boolean | undefined;
+
+  for (const record of folderRecords) {
+    const names = parseNames(record);
+    const label = pickName(names) ?? getChildText(record, "NAME");
+    if (label) segments.push(label);
+    const ro = bool01(getChildText(record, "IS_READONLY"));
+    if (ro !== undefined) folderIsReadonly = ro;
+  }
+
+  const last = folderRecords[folderRecords.length - 1]!;
+  const deepestNames = parseNames(last);
+
+  const folderPath = segments.length ? segments.join(" › ") : undefined;
+  return {
+    folderPath,
+    folderNames: Object.keys(deepestNames).length ? deepestNames : undefined,
+    folderIsReadonly,
+  };
 }
 
 function parseItem(record: Element): CwScrewItem {
@@ -164,14 +181,11 @@ function parseItem(record: Element): CwScrewItem {
 
   const attributes = parseCondensedAttributes(record);
 
-  const folders = Array.from(
-    record.querySelectorAll(":scope > VbaItemFolders > Record"),
-  ).map(parseFolder);
+  const folderRecords = Array.from(record.querySelectorAll(":scope > VbaItemFolders > Record"));
+  const folderFields = parseFlattenedFolderFields(folderRecords);
 
   return {
-    id: record.getAttribute("ID") ?? "",
-    elementType: int(record.getAttribute("ELEMENT_TYPE") ?? undefined) ?? 0,
-
+    ...folderFields,
     attributes,
     thicknessMm: num(getChildText(record, "THICKNESS")),
     outerDiameterMm: num(getChildText(record, "OUTER_DIAMETER")),
@@ -198,7 +212,6 @@ function parseItem(record: Element): CwScrewItem {
 
     userFields: Object.keys(userFields).length ? userFields : undefined,
     lengths,
-    folders,
     raw: Object.keys(raw).length ? raw : undefined,
   };
 }
@@ -227,14 +240,6 @@ export function parseCwScrewsVbax(xmlText: string): CwScrewsDocument {
   const itemRecords = Array.from(root.querySelectorAll("VbaItems > Record"));
   const items = itemRecords.map(parseItem);
 
-  const foldersById: Record<string, CwFolder> = {};
-  for (const item of items) {
-    for (const f of item.folders) {
-      if (!f.id) continue;
-      foldersById[f.id] = foldersById[f.id] ?? f;
-    }
-  }
-
-  return { meta, items, foldersById };
+  return { meta, items };
 }
 

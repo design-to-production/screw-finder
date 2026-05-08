@@ -40,8 +40,8 @@ function entryRows(row: CwScrewEntry): { label: string; value: ReactNode }[] {
   return [
     { label: "List index", value: fmt(row.listIndex) },
     { label: "Row id", value: fmt(row.id) },
-    { label: "Item id", value: fmt(row.itemId) },
-    { label: "Element type", value: fmt(row.elementType) },
+    { label: "Catalog item index", value: fmt(row.itemId) },
+    { label: "Folder path", value: fmt(row.folderPath) },
     { label: "Name", value: fmt(row.name) },
     { label: "Short name", value: fmt(row.shortName) },
     { label: "Material", value: fmt(row.material) },
@@ -63,8 +63,9 @@ function entryRows(row: CwScrewEntry): { label: string; value: ReactNode }[] {
 
 function itemRows(item: CwScrewItem): { label: string; value: ReactNode }[] {
   const rows: { label: string; value: ReactNode }[] = [
-    { label: "Catalog id", value: fmt(item.id) },
-    { label: "Element type", value: fmt(item.elementType) },
+    { label: "Folder path", value: fmt(item.folderPath) },
+    { label: "Folder names (i18n)", value: fmt(item.folderNames) },
+    { label: "Folder read-only", value: fmt(item.folderIsReadonly) },
     { label: "Thickness", value: item.thicknessMm != null ? `${item.thicknessMm} mm` : "—" },
     { label: "Ø outer", value: item.outerDiameterMm != null ? `${item.outerDiameterMm} mm` : "—" },
     { label: "Ø inner", value: item.innerDiameterMm != null ? `${item.innerDiameterMm} mm` : "—" },
@@ -104,7 +105,13 @@ export default async function FullCardPage({ params }: PageProps) {
   }
 
   const row = cwScrewEntryList[idx]!;
-  const item = cwScrewsDocument.items.find(i => i.id === row.itemId);
+  const catalogItemIdx = Number.parseInt(row.itemId, 10);
+  const item =
+    Number.isFinite(catalogItemIdx) &&
+    catalogItemIdx >= 0 &&
+    catalogItemIdx < cwScrewsDocument.items.length
+      ? cwScrewsDocument.items[catalogItemIdx]
+      : undefined;
   const title = row.name ?? row.shortName ?? row.itemId;
 
   const pdfModel = buildFullCardPdfModel(row, item, idx, cwScrewEntryList.length);
@@ -159,7 +166,12 @@ export default async function FullCardPage({ params }: PageProps) {
               />
               <div className="min-w-0">
                 <h1 className="text-xl font-semibold leading-snug text-[#fbf0df]">{title}</h1>
-                <p className="mt-1 font-mono text-xs text-[#fbf0df]/50">{row.itemId}</p>
+                <p className="mt-1 font-mono text-xs text-[#fbf0df]/50">
+                  Item #{row.itemId}
+                  {row.folderPath ? (
+                    <span className="block text-[#fbf0df]/40">{row.folderPath}</span>
+                  ) : null}
+                </p>
               </div>
             </div>
 
@@ -186,7 +198,7 @@ export default async function FullCardPage({ params }: PageProps) {
                     </h2>
                     <div className="grid w-full gap-5 [grid-template-columns:repeat(auto-fit,minmax(min(100%,24rem),1fr))]">
                       {item.lengths.map((_, i) => {
-                        const variantEntry = cwScrewEntryList.find(r => r.id === `${item.id}:${i}`);
+                        const variantEntry = cwScrewEntryList.find(r => r.id === `${catalogItemIdx}:${i}`);
                         if (!variantEntry) return null;
                         return (
                           <ScrewCatalogCard

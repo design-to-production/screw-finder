@@ -32,11 +32,6 @@ export interface CwItemLength {
   orderNumber?: string;
 }
 
-export interface CwItemAttribute {
-  attributeType: number;
-  names: Partial<Record<CwLangCode, string>>;
-}
-
 export interface CwCondensedAttributes {
   name?: string;
   material?: string;
@@ -44,20 +39,13 @@ export interface CwCondensedAttributes {
   shortName?: string;
 }
 
-export interface CwFolder {
-  id: string;
-  elementType?: number;
-  parentId?: string;
-  isReadonly?: boolean;
-  name?: string;
-  names: Partial<Record<CwLangCode, string>>;
-}
-
 export interface CwScrewItem {
-  id: string;
-  elementType: number;
-
   attributes?: CwCondensedAttributes;
+
+  /** Category path from flattened VbaItemFolders (deepest-first segments joined). */
+  folderPath?: string;
+  folderNames?: Partial<Record<CwLangCode, string>>;
+  folderIsReadonly?: boolean;
 
   // Common geometry / properties (names normalized; values are kept numeric where possible)
   thicknessMm?: number;
@@ -86,7 +74,6 @@ export interface CwScrewItem {
   userFields?: Partial<Record<`USER${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10}`, string>>;
 
   lengths: CwItemLength[];
-  folders: CwFolder[];
 
   // Preserve any unrecognized fields for forward-compat.
   raw?: Record<string, string>;
@@ -95,6 +82,4 @@ export interface CwScrewItem {
 export interface CwScrewsDocument {
   meta: CwConnectorMeta;
   items: CwScrewItem[];
-  foldersById: Record<string, CwFolder>;
 }
-

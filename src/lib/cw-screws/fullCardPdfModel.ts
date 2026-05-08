@@ -13,8 +13,8 @@ function entryRowsStr(row: CwScrewEntry): { label: string; value: string }[] {
   return [
     { label: "List index", value: fmtStr(row.listIndex) },
     { label: "Row id", value: fmtStr(row.id) },
-    { label: "Item id", value: fmtStr(row.itemId) },
-    { label: "Element type", value: fmtStr(row.elementType) },
+    { label: "Catalog item index", value: fmtStr(row.itemId) },
+    { label: "Folder path", value: fmtStr(row.folderPath) },
     { label: "Name", value: fmtStr(row.name) },
     { label: "Short name", value: fmtStr(row.shortName) },
     { label: "Material", value: fmtStr(row.material) },
@@ -36,8 +36,9 @@ function entryRowsStr(row: CwScrewEntry): { label: string; value: string }[] {
 
 function itemRowsStr(item: CwScrewItem): { label: string; value: string }[] {
   const rows: { label: string; value: string }[] = [
-    { label: "Catalog id", value: fmtStr(item.id) },
-    { label: "Element type", value: fmtStr(item.elementType) },
+    { label: "Folder path", value: fmtStr(item.folderPath) },
+    { label: "Folder names (i18n)", value: fmtStr(item.folderNames) },
+    { label: "Folder read-only", value: fmtStr(item.folderIsReadonly) },
     { label: "Thickness", value: item.thicknessMm != null ? `${item.thicknessMm} mm` : "—" },
     { label: "Ø outer", value: item.outerDiameterMm != null ? `${item.outerDiameterMm} mm` : "—" },
     { label: "Ø inner", value: item.innerDiameterMm != null ? `${item.innerDiameterMm} mm` : "—" },

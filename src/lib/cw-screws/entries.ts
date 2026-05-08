@@ -3,10 +3,13 @@ import type { CwScrewItem, CwScrewsDocument } from "./model";
 export interface CwScrewEntry {
   /** Zero-based index in {@link buildScrewEntries} output order (stable route key). */
   listIndex: number;
-  // identity
+  // identity — row key `${catalogItemIndex}:${lengthVariantIndex}`; catalogItemIndex indexes {@link CwScrewsDocument.items}.
   id: string;
+  /** Zero-based index into {@link CwScrewsDocument.items} (string for stable joins / display). */
   itemId: string;
-  elementType: number;
+
+  /** Folder path from connector (flattened VbaItemFolders). */
+  folderPath?: string;
 
   // length-variant
   lengthMm: number;
@@ -33,18 +36,20 @@ export interface CwScrewEntry {
 
 function toEntry(
   item: CwScrewItem,
+  catalogItemIndex: number,
   len: CwScrewItem["lengths"][number],
   withinItemIndex: number,
   listIndex: number,
 ): CwScrewEntry {
   // Must be unique across the whole dataset (used as the search-index primary key).
   // Some source rows can share the same length + empty orderNumber, so include index.
-  const id = `${item.id}:${withinItemIndex}`;
+  const id = `${catalogItemIndex}:${withinItemIndex}`;
   return {
     listIndex,
     id,
-    itemId: item.id,
-    elementType: item.elementType,
+    itemId: String(catalogItemIndex),
+
+    folderPath: item.folderPath,
 
     lengthMm: len.lengthMm,
     threadLengthMm: len.threadLengthMm,
@@ -74,6 +79,7 @@ export function getCwScrewEntrySearchText(r: CwScrewEntry): string {
     r.shortName,
     r.material,
     r.norm,
+    r.folderPath,
     r.manufacturer,
     r.drive,
     r.lengthOrderNumber,
@@ -87,23 +93,30 @@ export function getCwScrewEntrySearchText(r: CwScrewEntry): string {
 export function buildScrewEntries(doc: CwScrewsDocument): CwScrewEntry[] {
   const rows: CwScrewEntry[] = [];
   let listIndex = 0;
-  for (const item of doc.items) {
+  for (let catalogItemIndex = 0; catalogItemIndex < doc.items.length; catalogItemIndex++) {
+    const item = doc.items[catalogItemIndex]!;
     // Some records might be missing lengths; still emit one row.
     if (!item.lengths.length) {
       rows.push(
-        toEntry(item, {
-          lengthMm: 0,
-          threadLengthMm: undefined,
-          threadLength2Mm: undefined,
-          weightKg: undefined,
-          orderNumber: undefined,
-        }, 0, listIndex++),
+        toEntry(
+          item,
+          catalogItemIndex,
+          {
+            lengthMm: 0,
+            threadLengthMm: undefined,
+            threadLength2Mm: undefined,
+            weightKg: undefined,
+            orderNumber: undefined,
+          },
+          0,
+          listIndex++,
+        ),
       );
       continue;
     }
     for (let i = 0; i < item.lengths.length; i++) {
       const len = item.lengths[i]!;
-      rows.push(toEntry(item, len, i, listIndex++));
+      rows.push(toEntry(item, catalogItemIndex, len, i, listIndex++));
     }
   }
   return rows;
