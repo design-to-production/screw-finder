@@ -1,9 +1,12 @@
+import { FullCardPdfDownload } from "@/components/fullcard/FullCardPdfDownload";
 import { AppShell } from "@/components/AppShell";
 import { NavLinks } from "@/components/NavLinks";
+import { ScrewCatalogCard } from "@/components/screw-preview/ScrewCatalogCard";
 import { ScrewCardPreview } from "@/components/screw-preview/ScrewCardPreview";
 import type { CwScrewEntry } from "@/lib/cw-screws/entries";
+import { buildFullCardPdfModel, fullCardPdfFilename } from "@/lib/cw-screws/fullCardPdfModel";
 import { cwScrewEntryList, cwScrewsDocument } from "@/lib/cw-screws/staticDocument";
-import type { CwFolder, CwItemLength, CwScrewItem } from "@/lib/cw-screws/model";
+import type { CwScrewItem } from "@/lib/cw-screws/model";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
@@ -30,43 +33,6 @@ function FieldGrid({ rows }: { rows: { label: string; value: ReactNode }[] }) {
         </div>
       ))}
     </dl>
-  );
-}
-
-function folderLabel(f: CwFolder): string {
-  return f.names?.en ?? f.names?.de ?? f.name ?? f.id;
-}
-
-function resolveFolder(doc: typeof cwScrewsDocument, folder: CwFolder): string {
-  const chain: string[] = [];
-  let cur: CwFolder | undefined = folder;
-  const seen = new Set<string>();
-  while (cur && !seen.has(cur.id)) {
-    seen.add(cur.id);
-    chain.unshift(folderLabel(cur));
-    const parentId: string | undefined = cur.parentId;
-    cur =
-      parentId && parentId !== "{00000000-0000-0000-0000-000000000000}"
-        ? doc.foldersById[parentId]
-        : undefined;
-  }
-  return chain.join(" → ");
-}
-
-function matchingLengthRecord(item: CwScrewItem, row: CwScrewEntry): CwItemLength | undefined {
-  const lastColon = row.id.lastIndexOf(":");
-  if (lastColon >= 0) {
-    const wi = Number.parseInt(row.id.slice(lastColon + 1), 10);
-    if (Number.isFinite(wi) && item.lengths[wi] !== undefined) {
-      return item.lengths[wi];
-    }
-  }
-  return item.lengths.find(
-    l =>
-      l.lengthMm === row.lengthMm &&
-      (l.threadLengthMm ?? null) === (row.threadLengthMm ?? null) &&
-      (l.threadLength2Mm ?? null) === (row.threadLength2Mm ?? null) &&
-      (l.orderNumber ?? "") === (row.lengthOrderNumber ?? ""),
   );
 }
 
@@ -123,25 +89,7 @@ function itemRows(item: CwScrewItem): { label: string; value: ReactNode }[] {
     rows.push({ label: "User fields", value: fmt(item.userFields) });
   }
 
-  if (item.attributes && Object.keys(item.attributes).length > 0) {
-    rows.push({ label: "Attributes (condensed)", value: fmt(item.attributes) });
-  }
-
-  if (item.raw && Object.keys(item.raw).length > 0) {
-    rows.push({ label: "Raw connector fields", value: fmt(item.raw) });
-  }
-
   return rows;
-}
-
-function lengthVariantRows(len: CwItemLength): { label: string; value: ReactNode }[] {
-  return [
-    { label: "lengthMm", value: fmt(len.lengthMm) },
-    { label: "threadLengthMm", value: fmt(len.threadLengthMm) },
-    { label: "threadLength2Mm", value: fmt(len.threadLength2Mm) },
-    { label: "weightKg", value: fmt(len.weightKg) },
-    { label: "orderNumber", value: fmt(len.orderNumber) },
-  ];
 }
 
 type PageProps = {
@@ -158,7 +106,8 @@ export default async function FullCardPage({ params }: PageProps) {
   const row = cwScrewEntryList[idx]!;
   const item = cwScrewsDocument.items.find(i => i.id === row.itemId);
   const title = row.name ?? row.shortName ?? row.itemId;
-  const lenRecord = item ? matchingLengthRecord(item, row) : undefined;
+
+  const pdfModel = buildFullCardPdfModel(row, item, idx, cwScrewEntryList.length);
 
   return (
     <AppShell
@@ -166,7 +115,7 @@ export default async function FullCardPage({ params }: PageProps) {
       navRight={<NavLinks />}
     >
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-4xl space-y-6 px-4 py-5">
+        <div className="mx-auto max-w-7xl space-y-6 px-4 py-5">
           <div className="flex flex-wrap items-center gap-3 text-sm">
             <Link
               href="/cards/"
@@ -187,6 +136,16 @@ export default async function FullCardPage({ params }: PageProps) {
               <span className="font-mono">{cwScrewEntryList.length}</span>
               <span className="ml-1">entries</span>
             </span>
+            <FullCardPdfDownload
+              model={pdfModel}
+              filename={fullCardPdfFilename(idx, title)}
+              preview={{
+                lengthMm: row.lengthMm,
+                outerDiameterMm: row.outerDiameterMm,
+                innerDiameterMm: row.innerDiameterMm,
+                threadLengthMm: row.threadLengthMm,
+              }}
+            />
           </div>
 
           <section className="overflow-hidden rounded-xl border border-[#fbf0df]/20 bg-[#1a1a1a]/90">
@@ -225,62 +184,24 @@ export default async function FullCardPage({ params }: PageProps) {
                     <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-[#f3d5a3]/90">
                       Length variants on item ({item.lengths.length})
                     </h2>
-                    <ul className="space-y-3">
-                      {item.lengths.map((len, i) => (
-                        <li
-                          key={`${len.lengthMm}-${i}`}
-                          className={`rounded-lg border p-3 text-sm ${
-                            lenRecord === len
-                              ? "border-[#f3d5a3]/50 bg-[#fbf0df]/[0.06]"
-                              : "border-[#fbf0df]/15 bg-[#242424]/80"
-                          }`}
-                        >
-                          <div className="mb-2 font-medium text-[#fbf0df]/80">
-                            Variant {i + 1}
-                            {lenRecord === len ? (
-                              <span className="ml-2 text-[#f3d5a3]">← this row</span>
-                            ) : null}
-                          </div>
-                          <FieldGrid rows={lengthVariantRows(len)} />
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="grid w-full gap-5 [grid-template-columns:repeat(auto-fit,minmax(min(100%,24rem),1fr))]">
+                      {item.lengths.map((_, i) => {
+                        const variantEntry = cwScrewEntryList.find(r => r.id === `${item.id}:${i}`);
+                        if (!variantEntry) return null;
+                        return (
+                          <ScrewCatalogCard
+                            key={variantEntry.id}
+                            entry={variantEntry}
+                            current={variantEntry.id === row.id}
+                          />
+                        );
+                      })}
+                    </div>
                   </section>
-
-                  {item.folders.length > 0 ? (
-                    <section>
-                      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-[#f3d5a3]/90">
-                        Folders
-                      </h2>
-                      <ul className="list-inside list-disc space-y-2 text-sm text-[#fbf0df]/85">
-                        {item.folders.map(f => (
-                          <li key={f.id}>
-                            <span className="font-medium">{folderLabel(f)}</span>
-                            <span className="ml-2 font-mono text-xs text-[#fbf0df]/45">{f.id}</span>
-                            <div className="mt-0.5 text-xs text-[#fbf0df]/55">{resolveFolder(cwScrewsDocument, f)}</div>
-                          </li>
-                        ))}
-                      </ul>
-                    </section>
-                  ) : null}
                 </>
               ) : (
                 <p className="text-sm text-amber-200/90">Catalog item not found for this row.</p>
               )}
-
-              <section>
-                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-[#fbf0df]/55">
-                  Connector file meta
-                </h2>
-                <FieldGrid
-                  rows={[
-                    { label: "Modified", value: fmt(cwScrewsDocument.meta.modified) },
-                    { label: "Version", value: fmt(cwScrewsDocument.meta.version) },
-                    { label: "Editor", value: fmt(cwScrewsDocument.meta.editor) },
-                    { label: "Date", value: fmt(cwScrewsDocument.meta.date) },
-                  ]}
-                />
-              </section>
             </div>
           </section>
         </div>
