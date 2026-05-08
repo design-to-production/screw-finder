@@ -80,12 +80,37 @@ const colDefs: ColDef<CwScrewEntry>[] = [
   },
 
   { field: "name", headerName: "Name", flex: 2, minWidth: 240, filter: true },
-  { field: "shortName", headerName: "Short", flex: 1, minWidth: 160, filter: true },
+  {
+    field: "shortName",
+    headerName: "Commercial designation",
+    flex: 1,
+    minWidth: 200,
+    filter: true,
+  },
   { field: "material", headerName: "Material", flex: 1, minWidth: 180, filter: true },
   { field: "norm", headerName: "Norm", flex: 1, minWidth: 160, filter: true },
 
   { field: "manufacturer", headerName: "Manufacturer", flex: 1, minWidth: 160, filter: true },
-  { field: "drive", headerName: "Drive", width: 120, filter: true },
+  {
+    colId: "driveSize",
+    headerName: "Drive",
+    width: 100,
+    minWidth: 88,
+    filter: true,
+    valueGetter: p => {
+      const d = p.data;
+      if (!d) return "";
+      return d.driveSize ?? d.drive ?? "";
+    },
+  },
+  {
+    colId: "driveType",
+    headerName: "Drive type",
+    width: 140,
+    minWidth: 120,
+    filter: true,
+    valueGetter: p => p.data?.driveType ?? "",
+  },
 
   { field: "outerDiameterMm", headerName: "Ø outer", width: 120, filter: "agNumberColumnFilter" },
   { field: "innerDiameterMm", headerName: "Ø inner", width: 120, filter: "agNumberColumnFilter" },

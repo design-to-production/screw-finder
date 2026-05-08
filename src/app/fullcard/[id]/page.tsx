@@ -3,6 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { NavLinks } from "@/components/NavLinks";
 import { ScrewCatalogCard } from "@/components/screw-preview/ScrewCatalogCard";
 import { ScrewCardPreview } from "@/components/screw-preview/ScrewCardPreview";
+import { d2pRecordToFlatRows } from "@/lib/cw-screws/d2pCatalog";
 import type { CwScrewEntry } from "@/lib/cw-screws/entries";
 import { buildFullCardPdfModel, fullCardPdfFilename } from "@/lib/cw-screws/fullCardPdfModel";
 import { cwScrewEntryList, cwScrewsDocument } from "@/lib/cw-screws/screwDataset";
@@ -43,11 +44,12 @@ function entryRows(row: CwScrewEntry): { label: string; value: ReactNode }[] {
     { label: "Catalog item index", value: fmt(row.itemId) },
     { label: "Folder path", value: fmt(row.folderPath) },
     { label: "Name", value: fmt(row.name) },
-    { label: "Short name", value: fmt(row.shortName) },
+    { label: "Commercial designation", value: fmt(row.shortName) },
     { label: "Material", value: fmt(row.material) },
     { label: "Norm", value: fmt(row.norm) },
     { label: "Manufacturer", value: fmt(row.manufacturer) },
-    { label: "Drive", value: fmt(row.drive) },
+    { label: "Drive", value: fmt(row.driveSize ?? row.drive) },
+    { label: "Drive type", value: fmt(row.driveType) },
     { label: "Length", value: row.lengthMm != null ? `${row.lengthMm} mm` : "—" },
     { label: "Thread length", value: row.threadLengthMm != null ? `${row.threadLengthMm} mm` : "—" },
     { label: "Thread length 2", value: row.threadLength2Mm != null ? `${row.threadLength2Mm} mm` : "—" },
@@ -167,6 +169,12 @@ export default async function FullCardPage({ params }: PageProps) {
               <div className="min-w-0">
                 <h1 className="text-xl font-semibold leading-snug text-d2p-ink">{title}</h1>
                 <p className="mt-1 font-mono text-xs text-d2p-muted">
+                  {row.d2p ? (
+                    <>
+                      <span className="text-d2p-ink/90">{row.d2p.screw_key}</span>
+                      <span className="mx-1.5 text-d2p-muted/50">·</span>
+                    </>
+                  ) : null}
                   Item #{row.itemId}
                   {row.folderPath ? (
                     <span className="block text-d2p-muted/90">{row.folderPath}</span>
@@ -176,6 +184,15 @@ export default async function FullCardPage({ params }: PageProps) {
             </div>
 
             <div className="space-y-6 p-4">
+              {row.d2p ? (
+                <section>
+                  <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-d2p-red">
+                    D2P catalog record
+                  </h2>
+                  <FieldGrid rows={d2pRecordToFlatRows(row.d2p)} />
+                </section>
+              ) : null}
+
               <section>
                 <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-d2p-red">
                   Flattened row (search index)
@@ -183,7 +200,7 @@ export default async function FullCardPage({ params }: PageProps) {
                 <FieldGrid rows={entryRows(row)} />
               </section>
 
-              {item ? (
+              {item && !row.d2p ? (
                 <>
                   <section>
                     <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-d2p-red">
@@ -211,9 +228,11 @@ export default async function FullCardPage({ params }: PageProps) {
                     </div>
                   </section>
                 </>
-              ) : (
+              ) : null}
+
+              {!item ? (
                 <p className="text-sm text-amber-800">Catalog item not found for this row.</p>
-              )}
+              ) : null}
             </div>
           </section>
         </div>

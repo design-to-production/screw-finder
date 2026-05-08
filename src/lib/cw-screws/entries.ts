@@ -1,3 +1,4 @@
+import type { D2pScrewRecord } from "./d2pCatalogSchema";
 import type { CwScrewItem, CwScrewsDocument } from "./model";
 
 export interface CwScrewEntry {
@@ -26,12 +27,20 @@ export interface CwScrewEntry {
 
   // common fields (useful for filtering)
   manufacturer?: string;
+  /** Legacy single-line drive text (e.g. connector export). */
   drive?: string;
+  /** Bit/recess size label (e.g. `T30`). Set from D2P `geometry.drive_size`. */
+  driveSize?: string;
+  /** Humanized drive type (e.g. `t star plus`). From D2P `geometry.drive_type`. */
+  driveType?: string;
   outerDiameterMm?: number;
   innerDiameterMm?: number;
   drillingDiameter2Mm?: number;
   isVisible?: boolean;
   isReadonly?: boolean;
+
+  /** Set when the catalog was loaded from `new_data_model.json`. */
+  d2p?: D2pScrewRecord;
 }
 
 function toEntry(
@@ -74,7 +83,26 @@ function toEntry(
 
 /** Text blob indexed for fuzzy search (generic hook consumes this). */
 export function getCwScrewEntrySearchText(r: CwScrewEntry): string {
+  const d = r.d2p;
+  const d2pParts = d
+    ? [
+        d.screw_key,
+        d.article_number,
+        d.internal_designation,
+        d.commercial_designation,
+        d.product_family,
+        d.standard,
+        d.eta_number,
+        d.declaration_of_performance_number,
+        d.logistics?.ean,
+        d.geometry.head_shape,
+        d.geometry.thread_type,
+        d.geometry.drive_type,
+        d.geometry.drive_size,
+      ]
+    : [];
   const parts = [
+    ...d2pParts,
     r.name,
     r.shortName,
     r.material,
@@ -82,6 +110,8 @@ export function getCwScrewEntrySearchText(r: CwScrewEntry): string {
     r.folderPath,
     r.manufacturer,
     r.drive,
+    r.driveSize,
+    r.driveType,
     r.lengthOrderNumber,
     r.lengthMm != null ? `length ${r.lengthMm}` : undefined,
     r.outerDiameterMm != null ? `outer ${r.outerDiameterMm}` : undefined,

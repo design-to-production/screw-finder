@@ -35,8 +35,25 @@ export function ScrewCatalogCard({ entry, current = false }: ScrewCatalogCardPro
           <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm text-d2p-muted">
             {entry.shortName ? (
               <>
-                <dt className="text-d2p-muted/80">Short</dt>
+                <dt className="text-d2p-muted/80">Commercial designation</dt>
                 <dd className="truncate text-d2p-ink">{entry.shortName}</dd>
+              </>
+            ) : null}
+            {entry.driveSize != null && entry.driveSize !== "" ? (
+              <>
+                <dt className="text-d2p-muted/80">Drive</dt>
+                <dd className="text-d2p-ink">{entry.driveSize}</dd>
+              </>
+            ) : entry.drive != null && entry.drive !== "" ? (
+              <>
+                <dt className="text-d2p-muted/80">Drive</dt>
+                <dd className="truncate text-d2p-ink">{entry.drive}</dd>
+              </>
+            ) : null}
+            {entry.driveType != null && entry.driveType !== "" ? (
+              <>
+                <dt className="text-d2p-muted/80">Drive type</dt>
+                <dd className="truncate text-d2p-ink">{entry.driveType}</dd>
               </>
             ) : null}
             <dt className="text-d2p-muted/80">Length</dt>

@@ -1,3 +1,4 @@
+import { d2pRecordToFlatRows } from "./d2pCatalog";
 import type { CwScrewEntry } from "./entries";
 import type { CwScrewItem } from "./model";
 
@@ -16,11 +17,12 @@ function entryRowsStr(row: CwScrewEntry): { label: string; value: string }[] {
     { label: "Catalog item index", value: fmtStr(row.itemId) },
     { label: "Folder path", value: fmtStr(row.folderPath) },
     { label: "Name", value: fmtStr(row.name) },
-    { label: "Short name", value: fmtStr(row.shortName) },
+    { label: "Commercial designation", value: fmtStr(row.shortName) },
     { label: "Material", value: fmtStr(row.material) },
     { label: "Norm", value: fmtStr(row.norm) },
     { label: "Manufacturer", value: fmtStr(row.manufacturer) },
-    { label: "Drive", value: fmtStr(row.drive) },
+    { label: "Drive", value: fmtStr(row.driveSize ?? row.drive) },
+    { label: "Drive type", value: fmtStr(row.driveType) },
     { label: "Length", value: row.lengthMm != null ? `${row.lengthMm} mm` : "—" },
     { label: "Thread length", value: row.threadLengthMm != null ? `${row.threadLengthMm} mm` : "—" },
     { label: "Thread length 2", value: row.threadLength2Mm != null ? `${row.threadLength2Mm} mm` : "—" },
@@ -105,11 +107,13 @@ export function buildFullCardPdfModel(
 ): FullCardPdfModel {
   const title = row.name ?? row.shortName ?? row.itemId;
 
-  const sections: FullCardPdfSection[] = [
-    { title: "Flattened row (search index)", rows: entryRowsStr(row) },
-  ];
+  const sections: FullCardPdfSection[] = [];
+  if (row.d2p) {
+    sections.push({ title: "D2P catalog record", rows: d2pRecordToFlatRows(row.d2p) });
+  }
+  sections.push({ title: "Flattened row (search index)", rows: entryRowsStr(row) });
 
-  if (item) {
+  if (item && !row.d2p) {
     sections.push({ title: "Source catalog item", rows: itemRowsStr(item) });
   }
 
