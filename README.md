@@ -30,3 +30,4 @@ bun run preview
 
 - The workflow in `.github/workflows/deploy.yml` deploys on pushes to `main`.
 - In your GitHub repo settings, set **Pages → Build and deployment → Source** to **GitHub Actions**.
+- CI uses the Bun version in `.bun-version` (and the workflow pins it) so `bun install --frozen-lockfile` stays reliable.
