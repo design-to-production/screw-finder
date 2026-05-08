@@ -19,33 +19,58 @@ function isActive(pathname: string, href: string): boolean {
   return normalizePath(pathname) === normalizePath(href);
 }
 
-export function NavLinks() {
+export type NavLinksProps = {
+  /** `drawer`: stacked full-width targets for the mobile menu */
+  layout?: "inline" | "drawer";
+};
+
+export function NavLinks({ layout = "inline" }: NavLinksProps) {
   const pathname = usePathname() ?? "";
+  const drawer = layout === "drawer";
+
+  const linkClass = (active: boolean) =>
+    drawer
+      ? `block w-full rounded-lg px-3 py-2.5 text-center text-sm font-semibold transition-colors duration-150 ${
+          active
+            ? "bg-d2p-red text-white shadow-sm hover:bg-d2p-red-dark"
+            : "text-d2p-ink hover:bg-d2p-red/10 hover:text-d2p-red"
+        }`
+      : `rounded-md px-2.5 py-1.5 text-sm font-semibold transition-colors duration-150 ${
+          active
+            ? "bg-d2p-red text-white shadow-sm hover:bg-d2p-red-dark"
+            : "text-d2p-ink hover:bg-d2p-red/10 hover:text-d2p-red"
+        }`;
 
   return (
     <nav
-      className="flex flex-wrap items-center justify-end gap-x-2 gap-y-2 sm:gap-x-3"
+      className={
+        drawer
+          ? "flex w-full flex-col items-stretch gap-3"
+          : "flex flex-wrap items-center justify-end gap-x-2 gap-y-2 sm:gap-x-3"
+      }
       aria-label="Main"
     >
-      <div className="flex flex-wrap items-center justify-end gap-1">
+      <div
+        className={
+          drawer ? "flex w-full flex-col gap-2" : "flex flex-wrap items-center justify-end gap-1"
+        }
+      >
         {links.map(({ href, label }) => {
           const active = isActive(pathname, href);
           return (
-            <Link
-              key={href}
-              href={href}
-              className={`rounded-md px-2.5 py-1.5 text-sm font-semibold transition-colors duration-150 ${
-                active
-                  ? "bg-d2p-red text-white shadow-sm hover:bg-d2p-red-dark"
-                  : "text-d2p-ink hover:bg-d2p-red/10 hover:text-d2p-red"
-              }`}
-            >
+            <Link key={href} href={href} className={linkClass(active)}>
               {label}
             </Link>
           );
         })}
       </div>
-      <D2pNavbarLogo className="border-l border-d2p-border pl-2 sm:pl-3" />
+      <D2pNavbarLogo
+        className={
+          drawer
+            ? "mx-auto border-t border-d2p-border pt-3 border-l-0 pl-0"
+            : "border-l border-d2p-border pl-2 sm:pl-3"
+        }
+      />
     </nav>
   );
 }
