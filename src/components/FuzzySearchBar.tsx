@@ -36,24 +36,24 @@ export function FuzzySearchBar({
 
   return (
     <div className={`${shell} ${className}`}>
-      <div className={`flex flex-wrap items-center gap-2 ${variant === "navbar" ? "md:flex-nowrap" : ""}`}>
+      <div className={`flex flex-wrap items-center ${variant === 'navbar' ? 'gap-1 md:flex-nowrap' : 'gap-2'}`}>
         <input
           value={query}
-          onChange={e => setQuery(e.target.value)}
+          onChange={(e) => setQuery(e.target.value)}
           placeholder={placeholder}
           className={`min-w-0 bg-transparent font-mono text-sm text-d2p-ink outline-none transition-colors placeholder:text-d2p-muted/70 focus:text-d2p-ink ${
-            variant === "navbar"
-              ? "flex-1 w-full border-0 px-2 py-1 shadow-none ring-0 focus:ring-0"
-              : "w-full rounded-md border-0 py-2 px-2 md:flex-1"
+            variant === 'navbar'
+              ? 'flex-1 w-full border-0 px-0.5 py-0 shadow-none ring-0 focus:ring-0'
+              : 'w-full rounded-md border-0 py-2 px-2 md:flex-1'
           }`}
           aria-label="Fuzzy search"
         />
         <button
           type="button"
           className={
-            variant === "navbar"
-              ? "shrink-0 cursor-pointer rounded-md border-0 bg-transparent px-2 py-1 font-semibold text-sm text-d2p-red ring-0 transition-colors hover:bg-d2p-red/10 hover:text-d2p-red-dark active:bg-d2p-red/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-d2p-red/30"
-              : "shrink-0 cursor-pointer rounded-lg border-2 border-d2p-red bg-d2p-red px-4 py-2 font-bold text-white transition-colors hover:bg-d2p-red-dark active:translate-y-px"
+            variant === 'navbar'
+              ? 'shrink-0 cursor-pointer rounded border-0 bg-transparent px-1 py-0 font-semibold text-sm text-d2p-red ring-0 transition-colors hover:bg-d2p-red/10 hover:text-d2p-red-dark active:bg-d2p-red/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-d2p-red/30'
+              : 'shrink-0 cursor-pointer rounded-lg border-2 border-d2p-red bg-d2p-red px-4 py-2 font-bold text-white transition-colors hover:bg-d2p-red-dark active:translate-y-px'
           }
           onClick={clearQuery}
         >
@@ -61,7 +61,7 @@ export function FuzzySearchBar({
         </button>
         <div
           className={`font-mono shrink-0 text-xs text-d2p-muted transition-colors ${
-            variant === "navbar" ? "" : "text-sm"
+            variant === 'navbar' ? '' : 'text-sm'
           }`}
         >
           {isIndexing ? (
@@ -71,7 +71,7 @@ export function FuzzySearchBar({
               Rows: <span className="font-bold text-d2p-ink">{filteredCount}</span>
               {q ? (
                 <>
-                  {" "}
+                  {' '}
                   / <span>{totalCount}</span>
                 </>
               ) : null}
