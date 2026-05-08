@@ -12,20 +12,25 @@ import {
 } from "@/lib/cw-screws/entries";
 import { useFuzzySearch } from "@/lib/search";
 import type { CwScrewsDocument } from "@/lib/cw-screws/model";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 
 function ScrewCard({ entry }: { entry: CwScrewEntry }) {
   const title = entry.name ?? entry.shortName ?? entry.itemId;
   return (
-    <article className="flex flex-col overflow-hidden rounded-xl border border-[#fbf0df]/20 bg-[#1a1a1a]/90 shadow-sm">
-      <ScrewCardPreview
-        className="aspect-[4/3] w-full shrink-0 min-h-[200px]"
-        lengthMm={entry.lengthMm}
-        outerDiameterMm={entry.outerDiameterMm}
-        innerDiameterMm={entry.innerDiameterMm}
-        threadLengthMm={entry.threadLengthMm}
-      />
-      <div className="flex min-h-0 flex-1 flex-col gap-1.5 border-t border-[#fbf0df]/10 p-4">
+    <Link
+      href={`/fullcard/${entry.listIndex}/`}
+      className="flex flex-col overflow-hidden rounded-xl border border-[#fbf0df]/20 bg-[#1a1a1a]/90 shadow-sm outline-none transition-colors hover:border-[#f3d5a3]/35 hover:bg-[#1f1f1f]/90 focus-visible:ring-2 focus-visible:ring-[#f3d5a3]/50"
+    >
+      <article className="flex min-h-0 flex-1 flex-col">
+        <ScrewCardPreview
+          className="aspect-[4/3] w-full shrink-0 min-h-[200px]"
+          lengthMm={entry.lengthMm}
+          outerDiameterMm={entry.outerDiameterMm}
+          innerDiameterMm={entry.innerDiameterMm}
+          threadLengthMm={entry.threadLengthMm}
+        />
+        <div className="flex min-h-0 flex-1 flex-col gap-1.5 border-t border-[#fbf0df]/10 p-4">
         <h2 className="line-clamp-2 text-base font-semibold leading-snug text-[#fbf0df]">{title}</h2>
         <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm text-[#fbf0df]/75">
           {entry.shortName ? (
@@ -55,8 +60,9 @@ function ScrewCard({ entry }: { entry: CwScrewEntry }) {
             </>
           ) : null}
         </dl>
-      </div>
-    </article>
+        </div>
+      </article>
+    </Link>
   );
 }
 

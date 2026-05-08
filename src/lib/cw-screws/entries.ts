@@ -1,6 +1,8 @@
 import type { CwScrewItem, CwScrewsDocument } from "./model";
 
 export interface CwScrewEntry {
+  /** Zero-based index in {@link buildScrewEntries} output order (stable route key). */
+  listIndex: number;
   // identity
   id: string;
   itemId: string;
@@ -33,11 +35,13 @@ function toEntry(
   item: CwScrewItem,
   len: CwScrewItem["lengths"][number],
   withinItemIndex: number,
+  listIndex: number,
 ): CwScrewEntry {
   // Must be unique across the whole dataset (used as the search-index primary key).
   // Some source rows can share the same length + empty orderNumber, so include index.
   const id = `${item.id}:${withinItemIndex}`;
   return {
+    listIndex,
     id,
     itemId: item.id,
     elementType: item.elementType,
@@ -82,6 +86,7 @@ export function getCwScrewEntrySearchText(r: CwScrewEntry): string {
 
 export function buildScrewEntries(doc: CwScrewsDocument): CwScrewEntry[] {
   const rows: CwScrewEntry[] = [];
+  let listIndex = 0;
   for (const item of doc.items) {
     // Some records might be missing lengths; still emit one row.
     if (!item.lengths.length) {
@@ -92,13 +97,13 @@ export function buildScrewEntries(doc: CwScrewsDocument): CwScrewEntry[] {
           threadLength2Mm: undefined,
           weightKg: undefined,
           orderNumber: undefined,
-        }, 0),
+        }, 0, listIndex++),
       );
       continue;
     }
     for (let i = 0; i < item.lengths.length; i++) {
       const len = item.lengths[i]!;
-      rows.push(toEntry(item, len, i));
+      rows.push(toEntry(item, len, i, listIndex++));
     }
   }
   return rows;
