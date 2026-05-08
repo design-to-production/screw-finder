@@ -2,7 +2,7 @@
 
 import "@/lib/ag-grid";
 import { AgGridReact } from "ag-grid-react";
-import type { ColDef } from "ag-grid-community";
+import type { ColDef, ICellRendererParams, IHeaderParams } from "ag-grid-community";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-quartz.css";
 import "@/app/ag-grid-flat.css";
@@ -10,17 +10,75 @@ import "@/app/ag-grid-flat.css";
 import { AppShell } from "@/components/AppShell";
 import { FuzzySearchBar } from "@/components/FuzzySearchBar";
 import { NavLinks } from "@/components/NavLinks";
-import { useFuzzySearch } from "@/lib/search";
-import {
-  buildScrewEntries,
-  getCwScrewEntrySearchText,
-  type CwScrewEntry,
-} from "@/lib/cw-screws/entries";
-import { useMemo, useState } from "react";
-import screwBase from "@/data/screw_base.json";
-import type { CwScrewsDocument } from "@/lib/cw-screws/model";
+import type { CwScrewEntry } from "@/lib/cw-screws/entries";
+import { useScrewDataStore } from "@/stores/screwDataStore";
+import Link from "next/link";
+import { useEffect } from "react";
+
+/** “Open full detail” — window with northeast arrow (matches external-link affordance). */
+function FullCardGlyph({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      <polyline points="15 3 21 3 21 9" />
+      <line x1="10" y1="14" x2="21" y2="3" />
+    </svg>
+  );
+}
+
+function FullCardHeader(_props: IHeaderParams) {
+  return (
+    <div
+      className="flex h-full w-full items-center justify-center text-[#fbf0df]/70"
+      title="Full card detail"
+    >
+      <FullCardGlyph className="h-[17px] w-[17px]" />
+    </div>
+  );
+}
+
+function FullCardLinkCell(props: ICellRendererParams<CwScrewEntry>) {
+  const idx = props.data?.listIndex;
+  if (idx === undefined) return null;
+  return (
+    <Link
+      href={`/fullcard/${idx}/`}
+      className="inline-flex items-center justify-center rounded-md border border-[#fbf0df]/28 p-1.5 text-[#fbf0df]/90 transition-colors hover:border-[#f3d5a3]/45 hover:bg-[#fbf0df]/10"
+      aria-label="Open full card"
+      title="Full card"
+    >
+      <FullCardGlyph className="h-[17px] w-[17px]" />
+    </Link>
+  );
+}
 
 const colDefs: ColDef<CwScrewEntry>[] = [
+  {
+    colId: "fullCard",
+    headerName: "",
+    width: 52,
+    minWidth: 48,
+    maxWidth: 56,
+    pinned: "left",
+    lockPosition: true,
+    sortable: false,
+    filter: false,
+    floatingFilter: false,
+    suppressHeaderFilterButton: true,
+    headerComponent: FullCardHeader,
+    cellRenderer: FullCardLinkCell,
+  },
+
   { field: "name", headerName: "Name", flex: 2, minWidth: 240, filter: true },
   { field: "shortName", headerName: "Short", flex: 1, minWidth: 160, filter: true },
   { field: "material", headerName: "Material", flex: 1, minWidth: 180, filter: true },
@@ -40,40 +98,40 @@ const colDefs: ColDef<CwScrewEntry>[] = [
 ];
 
 export default function TablePage() {
-  const [error, setError] = useState<string>("");
+  const filteredEntries = useScrewDataStore(s => s.filteredEntries);
+  const entries = useScrewDataStore(s => s.entries);
+  const query = useScrewDataStore(s => s.searchQuery);
+  const setQuery = useScrewDataStore(s => s.setSearchQuery);
+  const clearQuery = useScrewDataStore(s => s.clearSearchQuery);
+  const isIndexing = useScrewDataStore(s => s.isSearchIndexing);
+  const searchError = useScrewDataStore(s => s.searchError);
+  const ensureSearchIndex = useScrewDataStore(s => s.ensureSearchIndex);
 
-  const baseRows = useMemo(() => {
-    return buildScrewEntries(screwBase as unknown as CwScrewsDocument);
-  }, []);
-
-  const fuzzy = useFuzzySearch<CwScrewEntry>({
-    items: baseRows,
-    getId: r => r.id,
-    getSearchText: getCwScrewEntrySearchText,
-    onIndexError: err => setError(err.message),
-  });
+  useEffect(() => {
+    void ensureSearchIndex();
+  }, [ensureSearchIndex]);
 
   return (
     <AppShell
       title={<span className="text-lg font-semibold tracking-tight">Table</span>}
       center={
-        <FuzzySearchBar<CwScrewEntry>
+        <FuzzySearchBar
           variant="navbar"
-          query={fuzzy.query}
-          setQuery={fuzzy.setQuery}
-          clearQuery={fuzzy.clearQuery}
-          isIndexing={fuzzy.isIndexing}
-          filteredCount={fuzzy.filteredCount}
-          totalCount={fuzzy.totalCount}
+          query={query}
+          setQuery={setQuery}
+          clearQuery={clearQuery}
+          isIndexing={isIndexing}
+          filteredCount={filteredEntries.length}
+          totalCount={entries.length}
           placeholder="Search screws…"
           className="max-w-none"
         />
       }
       navRight={<NavLinks />}
     >
-      {error ? (
+      {searchError ? (
         <div className="shrink-0 border-b border-red-400/80 bg-[#1a1a1a] px-2 py-2 font-mono text-sm text-red-200">
-          {error}
+          {searchError}
         </div>
       ) : null}
 
@@ -83,7 +141,7 @@ export default function TablePage() {
           style={{ minHeight: 240, height: "100%" }}
         >
           <AgGridReact<CwScrewEntry>
-            rowData={fuzzy.filteredItems}
+            rowData={filteredEntries}
             columnDefs={colDefs}
             theme="legacy"
             defaultColDef={{

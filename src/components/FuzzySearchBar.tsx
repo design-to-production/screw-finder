@@ -1,11 +1,13 @@
 "use client";
 
-import type { UseFuzzySearchResult } from "@/lib/search/useFuzzySearch";
-
-export type FuzzySearchBarProps<T> = Pick<
-  UseFuzzySearchResult<T>,
-  "query" | "setQuery" | "clearQuery" | "isIndexing" | "filteredCount" | "totalCount"
-> & {
+export type FuzzySearchBarProps = {
+  query: string;
+  setQuery: (value: string) => void;
+  clearQuery: () => void;
+  isIndexing: boolean;
+  filteredCount: number;
+  totalCount: number;
+} & {
   placeholder?: string;
   clearLabel?: string;
   className?: string;
@@ -13,10 +15,8 @@ export type FuzzySearchBarProps<T> = Pick<
   variant?: "default" | "navbar";
 };
 
-/**
- * Presentational UI for `useFuzzySearch`. Pass the hook result spread or picked fields.
- */
-export function FuzzySearchBar<T>({
+/** Navbar / card search UI wired to catalog search state (see {@link useScrewDataStore}). */
+export function FuzzySearchBar({
   query,
   setQuery,
   clearQuery,
@@ -27,7 +27,7 @@ export function FuzzySearchBar<T>({
   clearLabel = "Clear search",
   className = "",
   variant = "default",
-}: FuzzySearchBarProps<T>) {
+}: FuzzySearchBarProps) {
   const q = query.trim();
   const shell =
     variant === "navbar"

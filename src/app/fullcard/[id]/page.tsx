@@ -5,7 +5,7 @@ import { ScrewCatalogCard } from "@/components/screw-preview/ScrewCatalogCard";
 import { ScrewCardPreview } from "@/components/screw-preview/ScrewCardPreview";
 import type { CwScrewEntry } from "@/lib/cw-screws/entries";
 import { buildFullCardPdfModel, fullCardPdfFilename } from "@/lib/cw-screws/fullCardPdfModel";
-import { cwScrewEntryList, cwScrewsDocument } from "@/lib/cw-screws/staticDocument";
+import { cwScrewEntryList, cwScrewsDocument } from "@/lib/cw-screws/screwDataset";
 import type { CwScrewItem } from "@/lib/cw-screws/model";
 import Link from "next/link";
 import { notFound } from "next/navigation";
