@@ -1,4 +1,6 @@
-# bun-react-tailwind-template
+# screw-finder (Next.js static)
+
+## Local dev
 
 To install dependencies:
 
@@ -6,16 +8,25 @@ To install dependencies:
 bun install
 ```
 
-To start a development server:
+To start a dev server:
 
 ```bash
 bun dev
 ```
 
-To run for production:
+To build a static export (outputs to `out/`):
 
 ```bash
-bun start
+bun run build
 ```
 
-This project was created using `bun init` in bun v1.3.3. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+To preview the exported site locally:
+
+```bash
+bun run preview
+```
+
+## GitHub Pages
+
+- The workflow in `.github/workflows/deploy.yml` deploys on pushes to `main`.
+- In your GitHub repo settings, set **Pages → Build and deployment → Source** to **GitHub Actions**.
