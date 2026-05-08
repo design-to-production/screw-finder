@@ -1,0 +1,30 @@
+/* Flush grid: no rounded wrapper, minimal cell/header padding (scoped) */
+.ag-grid-flat.ag-theme-quartz-dark {
+  --ag-border-radius: 0;
+  --ag-wrapper-border-radius: 0;
+  --ag-cell-horizontal-padding: 6px;
+  --ag-widget-container-vertical-padding: 2px;
+  --ag-widget-container-horizontal-padding: 4px;
+}
+
+.ag-grid-flat.ag-theme-quartz-dark .ag-root-wrapper,
+.ag-grid-flat.ag-theme-quartz-dark .ag-root-wrapper-body {
+  border-radius: 0 !important;
+}
+
+.ag-grid-flat.ag-theme-quartz-dark .ag-header-cell,
+.ag-grid-flat.ag-theme-quartz-dark .ag-cell {
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+.ag-grid-flat.ag-theme-quartz-dark .ag-header-cell-comp-wrapper {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.ag-grid-flat.ag-theme-quartz-dark .ag-floating-filter-body input,
+.ag-grid-flat.ag-theme-quartz-dark .ag-input-field-input,
+.ag-grid-flat.ag-theme-quartz-dark .ag-text-field-input {
+  border-radius: 0 !important;
+}
