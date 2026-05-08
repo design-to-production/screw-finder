@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.11",
+    "ag-grid-community": "^34.2.0",
+    "ag-grid-react": "^34.2.0",
     "next": "^15.5.0",
     "react": "^19",
     "react-dom": "^19",
