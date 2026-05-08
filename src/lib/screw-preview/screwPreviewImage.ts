@@ -14,7 +14,78 @@ const PREVIEW_H = 480;
 export const D2P_PREVIEW_BACKGROUND_HEX = 0xffffff;
 
 /** Bump when preview look (colors / bg) changes — invalidates in-memory PNG cache. */
-const PREVIEW_CACHE_VERSION = "d2pred-lg-v5";
+const PREVIEW_CACHE_VERSION = "d2pred-lg-v16";
+
+/** Shaft diameter as a fraction of nominal outer diameter (thread crest = nominal Ø). */
+const SHAFT_DIAMETER_RATIO = 0.8;
+
+/** Cone tip: full apex angle (degrees) — half-angle from screw axis = half of this. */
+const TIP_CONE_APEX_DEG = 45;
+
+/** Head: full apex angle of the conical head (degrees); height = R_drive / tan(angle/2). */
+const HEAD_CONE_APEX_DEG = 90;
+
+/** Drive-face head diameter as a multiple of nominal outer Ø (thread major). */
+const HEAD_DIAMETER_RATIO = 2;
+
+/**
+ * Axial overlap (scene units): head cone extends this far past the shank top so the meshes
+ * intersect and the joint reads solid instead of a hairline gap from tip-point tangency.
+ */
+const HEAD_SHANK_OVERLAP_RATIO_OF_MAJOR_R = 0.08;
+
+/** Axial pitch per revolution as a fraction of nominal outer Ø (lead = ratio × Ø); 1 = one turn per Ø. */
+const THREAD_PITCH_PER_OD = 1;
+
+/**
+ * Triangular-profile helical thread: two π-offset crest/root ribbons form opposing flanks.
+ * Pitch `p` = axial advance per 2π rad (one full turn).
+ */
+function createTriangularHelixThreadGeometry(
+  threadH: number,
+  pitch: number,
+  radiusMajor: number,
+  radiusMinor: number,
+): THREE.BufferGeometry {
+  const p = Math.max(pitch, 1e-9);
+  const turns = threadH / p;
+  const segments = Math.max(24, Math.ceil(turns * 40));
+  const positions: number[] = [];
+  const indices: number[] = [];
+
+  for (let ribbon = 0; ribbon < 2; ribbon++) {
+    const ribbonPhase = ribbon * Math.PI;
+    const ribBase = positions.length / 3;
+
+    for (let i = 0; i <= segments; i++) {
+      const t = i / segments;
+      const y = -threadH / 2 + t * threadH;
+      const theta = (2 * Math.PI * y) / p + ribbonPhase;
+      positions.push(
+        radiusMajor * Math.cos(theta),
+        y,
+        radiusMajor * Math.sin(theta),
+        radiusMinor * Math.cos(theta + Math.PI),
+        y,
+        radiusMinor * Math.sin(theta + Math.PI),
+      );
+    }
+
+    for (let i = 0; i < segments; i++) {
+      const c0 = ribBase + i * 2;
+      const r0 = ribBase + i * 2 + 1;
+      const c1 = ribBase + (i + 1) * 2;
+      const r1 = ribBase + (i + 1) * 2 + 1;
+      indices.push(c0, r0, r1, c0, r1, c1);
+    }
+  }
+
+  const geom = new THREE.BufferGeometry();
+  geom.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geom.setIndex(indices);
+  geom.computeVertexNormals();
+  return geom;
+}
 
 /** D2P brand reds for preview screws (slight variation per part). */
 const PREVIEW_SCREW_HEAD = 0xdc4b3a;
@@ -42,29 +113,44 @@ export function buildScrewGroup(
 ): THREE.Group {
   const L = Math.max(props.lengthMm, 1);
   const od = Math.max(props.outerDiameterMm ?? 6, 0.1);
-  const id = Math.max(props.innerDiameterMm ?? od * 0.55, 0.05);
   const tl = Math.min(props.threadLengthMm ?? L * 0.7, L);
 
   const inv = 1.75 / L;
-  const headH = Math.min(L * 0.22, od * 1.5) * inv;
-  const tipH = od * 0.35 * inv;
-  const midH = L * inv - headH - tipH;
-  const threadH = Math.min(tl * inv, Math.max(midH * 0.92, 0.08));
-  const smoothH = Math.max(midH - threadH, 0);
+  /** Crest / nominal radius — thread major Ø equals catalog outer Ø. */
+  const threadMajorR = (od / 2) * inv;
+  /** Smooth core Ø = 80% of nominal ⇒ radial thread depth = 10% of Ø each side. */
+  const shaftR = ((SHAFT_DIAMETER_RATIO * od) / 2) * inv;
 
-  const headR = (od / 2) * inv;
-  const shaftR = (id / 2) * inv;
+  const tipHalfAngleRad = (TIP_CONE_APEX_DEG / 2) * (Math.PI / 180);
+  const tipH = shaftR / Math.tan(tipHalfAngleRad);
 
+  const headHalfAngleRad = (HEAD_CONE_APEX_DEG / 2) * (Math.PI / 180);
+  /** Wide drive radius = HEAD_DIAMETER_RATIO × nominal crest radius (200% Ø ⇒ radius = Ø). */
+  const headDriveR = HEAD_DIAMETER_RATIO * threadMajorR;
+  const headH = headDriveR / Math.tan(headHalfAngleRad);
+
+  /** Shank from tip base to drive plane; head cone sits down into this span (drive face at top plane). */
+  const midBody = Math.max(L * inv - tipH, 0.001);
+  /** Catalog thread length runs from tip base toward head (scaled). */
+  const threadSegH = Math.min(tl * inv, midBody);
+  /** Remaining shank at nominal Ø between head and threaded zone. */
+  const smoothOuterH = Math.max(midBody - threadSegH, 0);
+
+  /** Tip → thread → shank; head cone moved down by full headH so drive sits on shank top plane at y = total. */
   let y = 0;
-  const headY = y + headH / 2;
-  y += headH;
-  const threadY = y + threadH / 2;
-  y += threadH;
-  const smoothY = y + smoothH / 2;
-  y += smoothH;
   const tipY = y + tipH / 2;
+  y += tipH;
+  const threadY = y + threadSegH / 2;
+  y += threadSegH;
+  const smoothOuterY = y + smoothOuterH / 2;
+  y += smoothOuterH;
+  /** Top plane of shank / underside of drive (overall length ends here). */
+  const shankHeadJunctionY = y;
+  const headShankOverlap = Math.max(threadMajorR * HEAD_SHANK_OVERLAP_RATIO_OF_MAJOR_R, 1e-4);
+  const headGeomH = headH + headShankOverlap;
+  const headY = shankHeadJunctionY + headGeomH / 2 - headShankOverlap - headH;
 
-  const total = headH + threadH + smoothH + tipH;
+  const total = tipH + midBody;
   const offset = -total / 2;
 
   const group = new THREE.Group();
@@ -89,8 +175,20 @@ export function buildScrewGroup(
           color: PREVIEW_SCREW_THREAD,
           metalness: 0.2,
           roughness: 0.52,
+          side: THREE.DoubleSide,
+          polygonOffset: true,
+          polygonOffsetFactor: 1,
+          polygonOffsetUnits: 1,
         })
-      : new THREE.MeshStandardMaterial({ color: threadC, metalness: 0.35, roughness: 0.5 });
+      : new THREE.MeshStandardMaterial({
+          color: threadC,
+          metalness: 0.35,
+          roughness: 0.5,
+          side: THREE.DoubleSide,
+          polygonOffset: true,
+          polygonOffsetFactor: 1,
+          polygonOffsetUnits: 1,
+        });
   const smoothMat =
     variant === "landingLight"
       ? new THREE.MeshStandardMaterial({
@@ -108,27 +206,37 @@ export function buildScrewGroup(
         })
       : new THREE.MeshStandardMaterial({ color: tipC, metalness: 0.32, roughness: 0.48 });
 
-  const headGeom = new THREE.CylinderGeometry(headR, headR * 0.92, headH, 28);
-  const headMesh = new THREE.Mesh(headGeom, headMat);
-  headMesh.position.y = headY;
-  group.add(headMesh);
-
-  const threadGeom = new THREE.CylinderGeometry(shaftR * 1.06, shaftR, threadH, 22);
-  const threadMesh = new THREE.Mesh(threadGeom, threadMat);
-  threadMesh.position.y = threadY;
-  group.add(threadMesh);
-
-  if (smoothH > 0.001) {
-    const smoothGeom = new THREE.CylinderGeometry(shaftR, shaftR, smoothH, 20);
-    const smoothMesh = new THREE.Mesh(smoothGeom, smoothMat);
-    smoothMesh.position.y = smoothY;
-    group.add(smoothMesh);
-  }
-
-  const tipGeom = new THREE.CylinderGeometry(0, shaftR * 0.85, tipH, 16);
+  /** Point at y = 0; base (shaftR) meets thread zone. */
+  const tipGeom = new THREE.CylinderGeometry(shaftR, 0, tipH, 16);
   const tipMesh = new THREE.Mesh(tipGeom, tipMat);
   tipMesh.position.y = tipY;
   group.add(tipMesh);
+
+  if (threadSegH > 0.001) {
+    const threadCoreGeom = new THREE.CylinderGeometry(shaftR, shaftR, threadSegH, 24);
+    const threadCoreMesh = new THREE.Mesh(threadCoreGeom, smoothMat);
+    threadCoreMesh.position.y = threadY;
+    group.add(threadCoreMesh);
+
+    const pitchScene = THREAD_PITCH_PER_OD * od * inv;
+    const threadGeom = createTriangularHelixThreadGeometry(threadSegH, pitchScene, threadMajorR, shaftR);
+    const threadMesh = new THREE.Mesh(threadGeom, threadMat);
+    threadMesh.position.y = threadY;
+    group.add(threadMesh);
+  }
+
+  if (smoothOuterH > 0.001) {
+    const smoothOuterGeom = new THREE.CylinderGeometry(threadMajorR, threadMajorR, smoothOuterH, 28);
+    const smoothOuterMesh = new THREE.Mesh(smoothOuterGeom, smoothMat);
+    smoothOuterMesh.position.y = smoothOuterY;
+    group.add(smoothOuterMesh);
+  }
+
+  /** Drive face (+y) on shank top plane; apex (−y) runs down into shank with overlap. */
+  const headGeom = new THREE.CylinderGeometry(headDriveR, 0, headGeomH, 28);
+  const headMesh = new THREE.Mesh(headGeom, headMat);
+  headMesh.position.y = headY;
+  group.add(headMesh);
 
   return group;
 }

@@ -34,7 +34,7 @@ export interface D2pScrewRecord {
   ce_marked: boolean;
   declaration_of_performance_number: string;
   geometry: D2pScrewGeometry;
-  material_finish: D2pMaterialFinish;
+  material_finish?: D2pMaterialFinish;
   logistics?: D2pLogistics;
 }
 

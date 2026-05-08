@@ -7,7 +7,9 @@ function humanizeDriveTypeKey(key: string): string {
 }
 
 function materialLabel(r: D2pScrewRecord): string {
-  const { base_material_key, manufacturer_coating_name } = r.material_finish;
+  const mf = r.material_finish;
+  if (!mf) return "";
+  const { base_material_key, manufacturer_coating_name } = mf;
   return [base_material_key.replace(/_/g, " "), manufacturer_coating_name].filter(Boolean).join(" · ");
 }
 
@@ -92,9 +94,18 @@ export function d2pRecordToFlatRows(r: D2pScrewRecord): { label: string; value: 
     { label: "Drive type", value: humanizeDriveTypeKey(g.drive_type) },
     { label: "Thread type", value: g.thread_type.replace(/_/g, " ") },
     { label: "Thread length", value: `${g.thread_length_mm} mm` },
-    { label: "Base material", value: mf.base_material_key.replace(/_/g, " ") },
-    { label: "Manufacturer coating", value: mf.manufacturer_coating_name },
-    { label: "Sliding coated", value: mf.sliding_coated ? "Yes" : "No" },
+    {
+      label: "Base material",
+      value: mf ? mf.base_material_key.replace(/_/g, " ") : "—",
+    },
+    {
+      label: "Manufacturer coating",
+      value: mf ? mf.manufacturer_coating_name : "—",
+    },
+    {
+      label: "Sliding coated",
+      value: mf ? (mf.sliding_coated ? "Yes" : "No") : "—",
+    },
   ];
   const ean = r.logistics?.ean;
   if (ean) rows.push({ label: "EAN", value: ean });

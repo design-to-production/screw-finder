@@ -99,6 +99,8 @@ export function getCwScrewEntrySearchText(r: CwScrewEntry): string {
         d.geometry.thread_type,
         d.geometry.drive_type,
         d.geometry.drive_size,
+        d.material_finish?.base_material_key,
+        d.material_finish?.manufacturer_coating_name,
       ]
     : [];
   const parts = [

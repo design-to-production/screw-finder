@@ -2,7 +2,7 @@ import { FullCardPdfDownload } from "@/components/fullcard/FullCardPdfDownload";
 import { AppShell } from "@/components/AppShell";
 import { NavLinks } from "@/components/NavLinks";
 import { ScrewCatalogCard } from "@/components/screw-preview/ScrewCatalogCard";
-import { ScrewCardPreview } from "@/components/screw-preview/ScrewCardPreview";
+import { ScrewPreviewCanvas } from "@/components/screw-preview/ScrewPreviewCanvas";
 import { d2pRecordToFlatRows } from "@/lib/cw-screws/d2pCatalog";
 import type { CwScrewEntry } from "@/lib/cw-screws/entries";
 import { buildFullCardPdfModel, fullCardPdfFilename } from "@/lib/cw-screws/fullCardPdfModel";
@@ -158,9 +158,9 @@ export default async function FullCardPage({ params }: PageProps) {
           </div>
 
           <section className="overflow-hidden rounded-xl border border-d2p-border bg-d2p-surface shadow-sm">
-            <div className="grid gap-4 border-b border-d2p-border p-4 md:grid-cols-[minmax(0,280px)_1fr] md:items-start">
-              <ScrewCardPreview
-                className="aspect-[4/3] w-full max-w-sm shrink-0 rounded-lg min-h-[200px]"
+            <div className="grid gap-4 border-b border-d2p-border p-4 md:grid-cols-[minmax(0,520px)_1fr] md:items-start">
+              <ScrewPreviewCanvas
+                className="aspect-[4/3] w-full max-w-none shrink-0 min-h-[260px] md:min-h-[400px] md:aspect-[16/11]"
                 lengthMm={row.lengthMm}
                 outerDiameterMm={row.outerDiameterMm}
                 innerDiameterMm={row.innerDiameterMm}
