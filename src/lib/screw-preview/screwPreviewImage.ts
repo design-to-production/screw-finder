@@ -13,8 +13,24 @@ const PREVIEW_H = 480;
 /** White scene backdrop for PNG previews and landing R3F canvas. */
 export const D2P_PREVIEW_BACKGROUND_HEX = 0xffffff;
 
+/**
+ * Lighting shared by PNG renders and R3F canvases — no shadow maps; several directionals
+ * from different axes approximate studio lighting and keep thread flanks readable on white.
+ */
+export const SCREW_PREVIEW_SCENE = {
+  ambient: { color: 0xffffff, intensity: 0.48 },
+  directionals: [
+    { color: 0xffffff, intensity: 1.38, position: [4.6, 7.2, 3.6] as const },
+    { color: 0xfff2ee, intensity: 0.82, position: [-4.2, 3.4, -3.8] as const },
+    { color: 0xfff8f5, intensity: 0.68, position: [3.4, -2.8, 5.2] as const },
+    { color: 0xf0f4ff, intensity: 0.52, position: [-5.0, 4.5, 1.2] as const },
+    { color: 0xffffff, intensity: 0.44, position: [0.5, 8.2, -4.8] as const },
+    { color: 0xffebe8, intensity: 0.36, position: [5.5, 1.0, -2.5] as const },
+  ],
+} as const;
+
 /** Bump when preview look (colors / bg) changes — invalidates in-memory PNG cache. */
-const PREVIEW_CACHE_VERSION = "d2pred-lg-v16";
+const PREVIEW_CACHE_VERSION = "d2pred-lg-v22";
 
 /** Shaft diameter as a fraction of nominal outer diameter (thread crest = nominal Ø). */
 const SHAFT_DIAMETER_RATIO = 0.8;
@@ -89,7 +105,8 @@ function createTriangularHelixThreadGeometry(
 
 /** D2P brand reds for preview screws (slight variation per part). */
 const PREVIEW_SCREW_HEAD = 0xdc4b3a;
-const PREVIEW_SCREW_THREAD = 0xc94136;
+/** Darker than shank so threads read even under soft fills. */
+const PREVIEW_SCREW_THREAD = 0xa22a21;
 const PREVIEW_SCREW_SMOOTH = 0xd2483d;
 const PREVIEW_SCREW_TIP = 0xb8392b;
 
@@ -158,7 +175,7 @@ export function buildScrewGroup(
   group.rotation.y = 0.85;
 
   const steel = 0xb8a894;
-  const threadC = 0xa89882;
+  const threadC = 0x9c8f76;
   const tipC = 0x9d8f7c;
 
   const headMat =
@@ -173,8 +190,9 @@ export function buildScrewGroup(
     variant === "landingLight"
       ? new THREE.MeshStandardMaterial({
           color: PREVIEW_SCREW_THREAD,
-          metalness: 0.2,
-          roughness: 0.52,
+          metalness: 0.08,
+          roughness: 0.78,
+          flatShading: true,
           side: THREE.DoubleSide,
           polygonOffset: true,
           polygonOffsetFactor: 1,
@@ -182,8 +200,9 @@ export function buildScrewGroup(
         })
       : new THREE.MeshStandardMaterial({
           color: threadC,
-          metalness: 0.35,
-          roughness: 0.5,
+          metalness: 0.22,
+          roughness: 0.72,
+          flatShading: true,
           side: THREE.DoubleSide,
           polygonOffset: true,
           polygonOffsetFactor: 1,
@@ -265,6 +284,7 @@ function getOffscreenRenderer(): THREE.WebGLRenderer {
     renderer.setSize(PREVIEW_W, PREVIEW_H, false);
     renderer.setPixelRatio(1);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.shadowMap.enabled = false;
     const el = renderer.domElement;
     el.style.cssText = "position:fixed;left:-9999px;top:0;width:1px;height:1px;visibility:hidden;pointer-events:none;";
     el.setAttribute("aria-hidden", "true");
@@ -284,14 +304,14 @@ function renderScrewPreviewDataUrlSync(params: ScrewPreviewParams): string {
   camera.position.set(2.4, 0.35, 2.4);
   camera.lookAt(0, 0, 0);
 
-  /* Soft lighting so brand-red screw reads on white without clipping highlights. */
-  scene.add(new THREE.AmbientLight(0xffffff, 1.24));
-  const d1 = new THREE.DirectionalLight(0xffffff, 2.1);
-  d1.position.set(3.8, 6.5, 4.2);
-  scene.add(d1);
-  const d2 = new THREE.DirectionalLight(0xfff0ee, 0.76);
-  d2.position.set(-3.2, -1.2, -3.8);
-  scene.add(d2);
+  const L = SCREW_PREVIEW_SCENE;
+  scene.add(new THREE.AmbientLight(L.ambient.color, L.ambient.intensity));
+  for (const d of L.directionals) {
+    const dl = new THREE.DirectionalLight(d.color, d.intensity);
+    const [px, py, pz] = d.position;
+    dl.position.set(px, py, pz);
+    scene.add(dl);
+  }
 
   const screw = buildScrewGroup(params, "landingLight");
   scene.add(screw);

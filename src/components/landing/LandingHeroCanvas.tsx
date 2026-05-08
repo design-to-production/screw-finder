@@ -7,6 +7,7 @@ import {
   buildScrewGroup,
   disposeScrewGroup,
   D2P_PREVIEW_BACKGROUND_HEX,
+  SCREW_PREVIEW_SCENE,
   type ScrewPreviewParams,
 } from "@/lib/screw-preview/screwPreviewImage";
 
@@ -51,9 +52,10 @@ export function LandingHeroCanvas() {
           scene.background = new THREE.Color(D2P_PREVIEW_BACKGROUND_HEX);
         }}
       >
-        <ambientLight intensity={1.24} color="#ffffff" />
-        <directionalLight position={[4.2, 7, 4.5]} intensity={2.1} color="#ffffff" />
-        <directionalLight position={[-3.5, -2, -4]} intensity={0.76} color="#fff0ee" />
+        <ambientLight intensity={SCREW_PREVIEW_SCENE.ambient.intensity} color={SCREW_PREVIEW_SCENE.ambient.color} />
+        {SCREW_PREVIEW_SCENE.directionals.map((d, i) => (
+          <directionalLight key={i} position={[...d.position]} intensity={d.intensity} color={d.color} />
+        ))}
         <Suspense fallback={null}>
           <HeroScrew />
         </Suspense>
