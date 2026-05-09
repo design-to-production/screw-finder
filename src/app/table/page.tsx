@@ -64,62 +64,61 @@ function FullCardLinkCell(props: ICellRendererParams<CwScrewEntry>) {
 
 const colDefs: ColDef<CwScrewEntry>[] = [
   {
-    colId: "fullCard",
-    headerName: "",
+    colId: 'fullCard',
+    headerName: '',
     width: 52,
     minWidth: 48,
     maxWidth: 56,
-    pinned: "left",
+    pinned: 'left',
     lockPosition: true,
     sortable: false,
     filter: false,
     floatingFilter: false,
     suppressHeaderFilterButton: true,
     headerComponent: FullCardHeader,
-    cellRenderer: FullCardLinkCell,
+    cellRenderer: FullCardLinkCell
   },
 
-  { field: "name", headerName: "Name", flex: 2, minWidth: 240, filter: true },
+  { field: 'name', headerName: 'Name', flex: 2, minWidth: 240, filter: true },
+  { field: 'outerDiameterMm', headerName: 'Ø outer', width: 120, filter: 'agNumberColumnFilter' },
+  { field: 'lengthMm', headerName: 'Length', width: 120, filter: 'agNumberColumnFilter', sort: 'asc' },
+  { field: 'd2p.geometry.head_shape', headerName: 'Head shape', width: 120, filter: true },
+  { field: 'd2p.geometry.thread_type', headerName: 'Thread type', width: 120, filter: true },
+  { field: 'norm', headerName: 'Norm', flex: 1, minWidth: 160, filter: true },
+  { field: 'manufacturer', headerName: 'Manufacturer', flex: 1, minWidth: 160, filter: true },
+  { field: 'material', headerName: 'Material', flex: 1, minWidth: 180, filter: true },
   {
-    field: "shortName",
-    headerName: "Commercial designation",
-    flex: 1,
-    minWidth: 200,
-    filter: true,
-  },
-  { field: "material", headerName: "Material", flex: 1, minWidth: 180, filter: true },
-  { field: "norm", headerName: "Norm", flex: 1, minWidth: 160, filter: true },
-
-  { field: "manufacturer", headerName: "Manufacturer", flex: 1, minWidth: 160, filter: true },
-  {
-    colId: "driveSize",
-    headerName: "Drive",
+    colId: 'driveSize',
+    headerName: 'Drive',
     width: 100,
     minWidth: 88,
     filter: true,
-    valueGetter: p => {
+    valueGetter: (p) => {
       const d = p.data;
-      if (!d) return "";
-      return d.driveSize ?? d.drive ?? "";
-    },
+      if (!d) return '';
+      return d.driveSize ?? d.drive ?? '';
+    }
   },
   {
-    colId: "driveType",
-    headerName: "Drive type",
+    colId: 'driveType',
+    headerName: 'Drive type',
     width: 140,
     minWidth: 120,
     filter: true,
-    valueGetter: p => p.data?.driveType ?? "",
+    valueGetter: (p) => p.data?.driveType ?? ''
   },
-
-  { field: "outerDiameterMm", headerName: "Ø outer", width: 120, filter: "agNumberColumnFilter" },
-  { field: "innerDiameterMm", headerName: "Ø inner", width: 120, filter: "agNumberColumnFilter" },
-  { field: "drillingDiameter2Mm", headerName: "Ø drill", width: 120, filter: "agNumberColumnFilter" },
-
-  { field: "lengthMm", headerName: "Length", width: 120, filter: "agNumberColumnFilter", sort: "asc" },
-  { field: "threadLengthMm", headerName: "Thread", width: 120, filter: "agNumberColumnFilter" },
-  { field: "lengthWeightKg", headerName: "Weight (kg)", width: 140, filter: "agNumberColumnFilter" },
-  { field: "lengthOrderNumber", headerName: "Order #", width: 160, filter: true },
+  {
+    field: 'shortName',
+    headerName: 'Commercial designation',
+    flex: 1,
+    minWidth: 200,
+    filter: true
+  },
+  { field: 'innerDiameterMm', headerName: 'Ø inner', width: 120, filter: 'agNumberColumnFilter' },
+  { field: 'drillingDiameter2Mm', headerName: 'Ø drill', width: 120, filter: 'agNumberColumnFilter' },
+  { field: 'threadLengthMm', headerName: 'Thread', width: 120, filter: 'agNumberColumnFilter' },
+  { field: 'lengthWeightKg', headerName: 'Weight (kg)', width: 140, filter: 'agNumberColumnFilter' },
+  { field: 'lengthOrderNumber', headerName: 'Order #', width: 160, filter: true }
 ];
 
 export default function TablePage() {
