@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 
 export type ScrewPreviewParams = {
   lengthMm: number;
@@ -30,7 +31,7 @@ export const SCREW_PREVIEW_SCENE = {
 } as const;
 
 /** Bump when preview look (colors / bg) changes — invalidates in-memory PNG cache. */
-const PREVIEW_CACHE_VERSION = "d2pred-lg-v22";
+const PREVIEW_CACHE_VERSION = "d2pred-lg-v26";
 
 /** Shaft diameter as a fraction of nominal outer diameter (thread crest = nominal Ø). */
 const SHAFT_DIAMETER_RATIO = 0.8;
@@ -54,7 +55,10 @@ const HEAD_SHANK_OVERLAP_RATIO_OF_MAJOR_R = 0.08;
 const THREAD_PITCH_PER_OD = 1;
 
 /**
- * Triangular-profile helical thread: two π-offset crest/root ribbons form opposing flanks.
+ * Triangular-profile helical thread with visible thickness.
+ * Builds a small triangular prism that follows a helix; repeated with a π phase offset
+ * for a “double start” look.
+ *
  * Pitch `p` = axial advance per 2π rad (one full turn).
  */
 function createTriangularHelixThreadGeometry(
@@ -69,30 +73,54 @@ function createTriangularHelixThreadGeometry(
   const positions: number[] = [];
   const indices: number[] = [];
 
-  for (let ribbon = 0; ribbon < 2; ribbon++) {
-    const ribbonPhase = ribbon * Math.PI;
-    const ribBase = positions.length / 3;
+  // Controls for the triangular cross-section “wedge”.
+  const flankDeltaTheta = Math.PI / 18; // ~10°
+  const rootAxialOffset = p * 0.13;
+
+  for (let start = 0; start < 2; start++) {
+    const phase = start * Math.PI;
+    const base = positions.length / 3;
 
     for (let i = 0; i <= segments; i++) {
       const t = i / segments;
       const y = -threadH / 2 + t * threadH;
-      const theta = (2 * Math.PI * y) / p + ribbonPhase;
-      positions.push(
-        radiusMajor * Math.cos(theta),
-        y,
-        radiusMajor * Math.sin(theta),
-        radiusMinor * Math.cos(theta + Math.PI),
-        y,
-        radiusMinor * Math.sin(theta + Math.PI),
-      );
+      const theta = (2 * Math.PI * y) / p + phase;
+
+      // Crest point (outer edge of the thread).
+      const cx = radiusMajor * Math.cos(theta);
+      const cz = radiusMajor * Math.sin(theta);
+
+      // Two root points offset around and along the helix to form a triangular prism.
+      const r1Theta = theta + flankDeltaTheta;
+      const r2Theta = theta - flankDeltaTheta;
+      const r1y = y - rootAxialOffset;
+      const r2y = y + rootAxialOffset;
+      const r1x = radiusMinor * Math.cos(r1Theta);
+      const r1z = radiusMinor * Math.sin(r1Theta);
+      const r2x = radiusMinor * Math.cos(r2Theta);
+      const r2z = radiusMinor * Math.sin(r2Theta);
+
+      // Vertex order: crest, rootA, rootB
+      positions.push(cx, y, cz, r1x, r1y, r1z, r2x, r2y, r2z);
     }
 
     for (let i = 0; i < segments; i++) {
-      const c0 = ribBase + i * 2;
-      const r0 = ribBase + i * 2 + 1;
-      const c1 = ribBase + (i + 1) * 2;
-      const r1 = ribBase + (i + 1) * 2 + 1;
-      indices.push(c0, r0, r1, c0, r1, c1);
+      const i0 = base + i * 3;
+      const i1 = base + (i + 1) * 3;
+
+      const c0 = i0;
+      const a0 = i0 + 1;
+      const b0 = i0 + 2;
+      const c1 = i1;
+      const a1 = i1 + 1;
+      const b1 = i1 + 2;
+
+      // Side face crest-rootA.
+      indices.push(c0, a0, a1, c0, a1, c1);
+      // Side face crest-rootB.
+      indices.push(c0, c1, b1, c0, b1, b0);
+      // Bottom face rootA-rootB.
+      indices.push(a0, b0, b1, a0, b1, a1);
     }
   }
 
@@ -182,16 +210,16 @@ export function buildScrewGroup(
     variant === "landingLight"
       ? new THREE.MeshStandardMaterial({
           color: PREVIEW_SCREW_HEAD,
-          metalness: 0.22,
-          roughness: 0.48,
+          metalness: 0.78,
+          roughness: 0.33,
         })
-      : new THREE.MeshStandardMaterial({ color: steel, metalness: 0.4, roughness: 0.42 });
+      : new THREE.MeshStandardMaterial({ color: steel, metalness: 0.78, roughness: 0.33 });
   const threadMat =
     variant === "landingLight"
       ? new THREE.MeshStandardMaterial({
           color: PREVIEW_SCREW_THREAD,
-          metalness: 0.08,
-          roughness: 0.78,
+          metalness: 0.62,
+          roughness: 0.46,
           flatShading: true,
           side: THREE.DoubleSide,
           polygonOffset: true,
@@ -200,8 +228,8 @@ export function buildScrewGroup(
         })
       : new THREE.MeshStandardMaterial({
           color: threadC,
-          metalness: 0.22,
-          roughness: 0.72,
+          metalness: 0.65,
+          roughness: 0.48,
           flatShading: true,
           side: THREE.DoubleSide,
           polygonOffset: true,
@@ -212,18 +240,18 @@ export function buildScrewGroup(
     variant === "landingLight"
       ? new THREE.MeshStandardMaterial({
           color: PREVIEW_SCREW_SMOOTH,
-          metalness: 0.21,
-          roughness: 0.49,
+          metalness: 0.76,
+          roughness: 0.36,
         })
-      : new THREE.MeshStandardMaterial({ color: steel, metalness: 0.38, roughness: 0.44 });
+      : new THREE.MeshStandardMaterial({ color: steel, metalness: 0.76, roughness: 0.36 });
   const tipMat =
     variant === "landingLight"
       ? new THREE.MeshStandardMaterial({
           color: PREVIEW_SCREW_TIP,
-          metalness: 0.18,
-          roughness: 0.54,
+          metalness: 0.7,
+          roughness: 0.4,
         })
-      : new THREE.MeshStandardMaterial({ color: tipC, metalness: 0.32, roughness: 0.48 });
+      : new THREE.MeshStandardMaterial({ color: tipC, metalness: 0.7, roughness: 0.4 });
 
   /** Point at y = 0; base (shaftR) meets thread zone. */
   const tipGeom = new THREE.CylinderGeometry(shaftR, 0, tipH, 16);
@@ -273,6 +301,7 @@ export function disposeScrewGroup(root: THREE.Object3D): void {
 }
 
 let renderer: THREE.WebGLRenderer | null = null;
+let envTexture: THREE.Texture | null = null;
 
 function getOffscreenRenderer(): THREE.WebGLRenderer {
   if (!renderer) {
@@ -285,6 +314,11 @@ function getOffscreenRenderer(): THREE.WebGLRenderer {
     renderer.setPixelRatio(1);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.shadowMap.enabled = false;
+
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    envTexture = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    pmrem.dispose();
+
     const el = renderer.domElement;
     el.style.cssText = "position:fixed;left:-9999px;top:0;width:1px;height:1px;visibility:hidden;pointer-events:none;";
     el.setAttribute("aria-hidden", "true");
@@ -299,6 +333,7 @@ function renderScrewPreviewDataUrlSync(params: ScrewPreviewParams): string {
   const renderer = getOffscreenRenderer();
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(D2P_PREVIEW_BACKGROUND_HEX);
+  if (envTexture) scene.environment = envTexture;
 
   const camera = new THREE.PerspectiveCamera(42, PREVIEW_W / PREVIEW_H, 0.05, 80);
   camera.position.set(2.4, 0.35, 2.4);

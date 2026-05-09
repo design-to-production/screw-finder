@@ -4,6 +4,7 @@ import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Suspense, useEffect, useMemo } from "react";
 import * as THREE from "three";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import {
   buildScrewGroup,
   disposeScrewGroup,
@@ -55,8 +56,11 @@ export function ScrewPreviewCanvas({
           gl={{ antialias: true, alpha: false }}
           dpr={[1, 2]}
           style={{ width: "100%", height: "100%" }}
-          onCreated={({ scene }) => {
+          onCreated={({ scene, gl }) => {
             scene.background = new THREE.Color(D2P_PREVIEW_BACKGROUND_HEX);
+            const pmrem = new THREE.PMREMGenerator(gl);
+            scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+            pmrem.dispose();
           }}
         >
           <ambientLight intensity={SCREW_PREVIEW_SCENE.ambient.intensity} color={SCREW_PREVIEW_SCENE.ambient.color} />

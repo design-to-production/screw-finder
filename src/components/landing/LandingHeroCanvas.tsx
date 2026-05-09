@@ -3,6 +3,7 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Suspense, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import {
   buildScrewGroup,
   disposeScrewGroup,
@@ -48,8 +49,11 @@ export function LandingHeroCanvas() {
         camera={{ fov: 42, near: 0.05, far: 80, position: [2.35, 0.35, 2.35] }}
         gl={{ antialias: true, alpha: false }}
         dpr={[1, 2]}
-        onCreated={({ scene }) => {
+        onCreated={({ scene, gl }) => {
           scene.background = new THREE.Color(D2P_PREVIEW_BACKGROUND_HEX);
+          const pmrem = new THREE.PMREMGenerator(gl);
+          scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+          pmrem.dispose();
         }}
       >
         <ambientLight intensity={SCREW_PREVIEW_SCENE.ambient.intensity} color={SCREW_PREVIEW_SCENE.ambient.color} />
