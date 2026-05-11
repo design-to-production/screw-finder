@@ -74,8 +74,16 @@ export function AppNavbar({ title, center, navRight, className = "" }: AppNavbar
   return (
     <header className={`relative z-50 shrink-0 border-b-4 border-d2p-red bg-d2p-surface shadow-sm ${className}`}>
       <div className="flex min-h-12 items-center gap-2 px-3 py-2 sm:px-4">
-        <div className="flex min-w-0 flex-1 items-center md:w-[28%] md:flex-none md:shrink-0">
-          <div className="min-w-0 truncate text-d2p-ink">{title}</div>
+        <div className="flex min-w-0 flex-1 items-center gap-2.5 md:w-[28%] md:flex-none md:shrink-0">
+          <span
+            role="note"
+            aria-label="Proof of concept demo — not a finished product or official catalog."
+            className="shrink-0 cursor-help rounded-md border-2 border-d2p-red bg-d2p-surface px-2.5 py-1 text-xs font-extrabold uppercase tracking-wide text-d2p-red shadow-sm transition-colors hover:border-d2p-red-dark hover:bg-d2p-red/5 hover:text-d2p-red-dark sm:px-3 sm:py-1.5 sm:text-sm"
+            title="Proof of concept — this demo is not a finished product or an official catalog."
+          >
+            POC
+          </span>
+          <div className="min-w-0 flex-1 truncate text-d2p-ink">{title}</div>
         </div>
         <div className="hidden min-w-0 flex-1 justify-center px-1 md:flex">{center}</div>
         <div className="hidden w-[28%] min-w-0 shrink-0 items-center justify-end gap-2 md:flex">{navRight}</div>
